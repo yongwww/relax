@@ -327,6 +327,9 @@ def check_rnn(rnn_type, rnn_mod, target=tvm.target.Target("llvm -mcpu=core-avx2"
         args,
     ):
         # Fill args
+
+        # for mod_type in ["uni", "s", "b", "sb"]:
+        #     check_rnn("LSTM", mod_type, target, dev)
         if "b" in rnn_mod:
             args["bidirectional"] = True
         if "s" in rnn_mod:
@@ -356,8 +359,10 @@ def check_rnn(rnn_type, rnn_mod, target=tvm.target.Target("llvm -mcpu=core-avx2"
     model = None
     dtype = "float32"
     device = torch.device("cpu")
-    for batch_first in (True, False):
-        for use_bias in (True, False):
+    for batch_first in (True,):
+        for use_bias in [
+            True,
+        ]:
             for rnd_weights in [True]:  # (True, False):
                 model_inputs = {
                     "batch_first": batch_first,
@@ -381,6 +386,7 @@ def check_rnn(rnn_type, rnn_mod, target=tvm.target.Target("llvm -mcpu=core-avx2"
 
                         # Import model to Relay
                         mod, params = relay.frontend.from_pytorch(traced_script_module, shape_desc)
+                        print("LSTM relay model: \n", mod)
                     elif format == "onnx":
                         try:
                             onnx_model = get_onnx_model(model)
@@ -417,13 +423,17 @@ def test_rnns():
     for target, dev in tvm.testing.enabled_targets():
         # RNN types: GRU, LSTM
         # GRU modifications: unidirectional, stacked, bidirectional, stacked bidirectional
-        for mod_type in ["uni", "s", "b", "sb"]:
-            check_rnn("GRU", mod_type, target, dev)
+        # for mod_type in ["uni", "s", "b", "sb"]:
+        #     check_rnn("GRU", mod_type, target, dev)
         # LSTM modifications: unidirectional, stacked, bidirectional, stacked bidirectional,
         # and all these types with projection ("p", "sp", "bp", "sbp")
         # The latter are skiped for test acceleration
-        for mod_type in ["uni", "s", "b", "sb"]:
-            check_rnn("LSTM", mod_type, target, dev)
+        for mod_type in [
+            "s",
+            "sb",
+        ]:  # "s", "uni"]:  # , "s", "b", "sb"]:
+            check_rnn("GRU", mod_type, target, dev)
+        break
 
 
 if __name__ == "__main__":

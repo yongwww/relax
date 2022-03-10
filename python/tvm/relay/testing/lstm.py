@@ -121,6 +121,37 @@ def lstm_cell(num_hidden, batch_size=1, dtype="float32", name=""):
 
 def get_net(iterations, num_hidden, batch_size=1, dtype="float32"):
     """Constructs an unrolled RNN with LSTM cells"""
+
+    def true_branch(i):
+        zeros = builder.let(("zeros", input_type), relay.zeros((batch_size, num_hidden), dtype))
+        init_states = builder.let(("init_states", state_type), relay.Tuple([zeros, zeros]))
+
+        states = init_states
+        out = None
+        inputs = relay.Var("data", input_type)
+        i2h_weight = relay.Var("i2h_%s_weight" % iterations, weight_type)
+        i2h_bias = relay.Var("i2h_%i_bias" % iterations, bias_type)
+        h2h_weight = relay.Var("h2h_%s_weight" % iterations, weight_type)
+        h2h_bias = relay.Var("h2h_%s_bias" % iterations, bias_type)
+
+        cell_fn = lstm_cell(num_hidden, batch_size, dtype, "lstm_%s" % iterations)
+
+        call = builder.let(
+            ("call_%s" % i, cell_type),
+            relay.Call(cell_fn, [inputs, states, i2h_weight, i2h_bias, h2h_weight, h2h_bias]),
+        )
+        new_out = builder.let(("out_%s" % iterations, input_type), relay.TupleGetItem(call, 0))
+        new_states = builder.let(
+            ("states_%s" % iterations, state_type), relay.TupleGetItem(call, 1)
+        )
+        # global states
+        states = new_states
+        # global out
+        out = new_out
+        # global iterations
+        # iterations = i - 1
+        return out
+
     input_type = relay.TensorType((batch_size, num_hidden), dtype)
     weight_type = relay.TensorType((4 * num_hidden, num_hidden), dtype)
     bias_type = relay.TensorType((4 * num_hidden,), dtype)
@@ -130,12 +161,12 @@ def get_net(iterations, num_hidden, batch_size=1, dtype="float32"):
 
     builder = relay.ScopeBuilder()
 
-    zeros = builder.let(("zeros", input_type), relay.zeros((batch_size, num_hidden), dtype))
-    init_states = builder.let(("init_states", state_type), relay.Tuple([zeros, zeros]))
+    true_call = true_branch(iterations)
 
-    states = init_states
-    out = None
+    cond = relay.greater(relay.const(iterations), relay.const(0))
+    out = relay.If(cond, true_call, true_call)
 
+    """
     for i in range(iterations):
         inputs = relay.Var("data", input_type)
         i2h_weight = relay.Var("i2h_%s_weight" % i, weight_type)
@@ -153,6 +184,7 @@ def get_net(iterations, num_hidden, batch_size=1, dtype="float32"):
         new_states = builder.let(("states_%s" % i, state_type), relay.TupleGetItem(call, 1))
         states = new_states
         out = new_out
+    """
 
     builder.ret(out)
     body = builder.get()

@@ -1009,6 +1009,12 @@ def test_forward_rnn_layer():
             mx_params[name] = param._reduce()
 
         mod, params = relay.frontend.from_mxnet(mx_sym, shape=shape_dict, arg_params=mx_params)
+        print("relay lstm from gluon:\n", mod)
+        from tvm.relax.testing import relay_translator, nn
+
+        # relax_mod = relay_translator.from_relay(mod["main"])
+
+        """
         for target, dev in tvm.testing.enabled_targets():
             # only test graph executor because debug runtime is too slow
             for kind in ["graph"]:
@@ -1021,13 +1027,14 @@ def test_forward_rnn_layer():
                         tvm.testing.assert_allclose(val.numpy(), mx_res[i].asnumpy(), rtol=1e-3)
                 else:
                     tvm.testing.assert_allclose(op_res.numpy(), mx_res.asnumpy(), rtol=1e-3)
+        """
 
-    for mode in ["rnn", "gru", "lstm"]:
+    for mode in ["gru"]:  #  lstm, rnn, gru
         verify(mode, 1, 64, 64, 1)
-        verify(mode, 10, 64, 64, 2)
-        verify(mode, 10, 64, 32, 2)
-        verify(mode, 10, 64, 32, 2, batch=2)
-        verify(mode, 10, 32, 64, 1, bidirectional=True)
+        # verify(mode, 10, 64, 64, 2)
+        # verify(mode, 10, 64, 32, 2)
+        # verify(mode, 10, 64, 32, 2, batch=2)
+        # verify(mode, 10, 32, 64, 1, bidirectional=True)
         # The following two codeblocks need to be fixed for mxnet 1.5
         # verify(mode, 10, 64, 64, 3, init_states=False)
         # verify(mode, 10, 64, 64, 3, batch=2, bidirectional=True, init_states=False)
@@ -2352,4 +2359,5 @@ def test_forward_split_v2(
 
 
 if __name__ == "__main__":
-    pytest.main(["test_forward.py"])
+    test_forward_rnn_layer()
+    # pytest.main(["test_forward.py"])

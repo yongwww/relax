@@ -76,105 +76,26 @@ class LSTMLayer(jit.ScriptModule):
     def forward(self, input, state):
         # type: (Tensor, Tuple[Tensor, Tensor]) -> Tuple[Tensor, Tuple[Tensor, Tensor]]
         outputs = []
+        # print("input: ", input)
         for i in range(input.size(0)):
             out, state = self.cell(input[i], state)
             outputs += [out]
         return torch.stack(outputs), state
 
 
-class ReverseLSTMLayer(jit.ScriptModule):
-    def __init__(self, cell, *cell_args):
-        super(ReverseLSTMLayer, self).__init__()
-        self.cell = cell(*cell_args)
-
-    @jit.script_method
-    def forward(self, inputs, state):
-        # type: (Tensor, Tuple[Tensor, Tensor]) -> Tuple[Tensor, Tuple[Tensor, Tensor]]
-        outputs = jit.annotate(List[Tensor], [])
-        seq_len = inputs.size(0)
-        for i in range(seq_len):
-            out, state = self.cell(inputs[seq_len - i - 1], state)
-            # workaround for the lack of list rev support
-            outputs = [out] + outputs
-        return torch.stack(outputs), state
-
-
-class BidirLSTMLayer(jit.ScriptModule):
-    __constants__ = ["directions"]
-
-    def __init__(self, cell, *cell_args):
-        super(BidirLSTMLayer, self).__init__()
-        self.directions = nn.ModuleList(
-            [
-                LSTMLayer(cell, *cell_args),
-                ReverseLSTMLayer(cell, *cell_args),
-            ]
-        )
-
-    @jit.script_method
-    def forward(self, input, states):
-        # type: (Tensor, List[Tuple[Tensor, Tensor]]) -> Tuple[Tensor, List[Tuple[Tensor, Tensor]]]
-        # List[LSTMState]: [forward LSTMState, backward LSTMState]
-        outputs = jit.annotate(List[Tensor], [])
-        output_states = jit.annotate(List[Tuple[Tensor, Tensor]], [])
-        for (i, direction) in enumerate(self.directions):
-            state = states[i]
-            out, out_state = direction(input, state)
-            outputs += [out]
-            output_states += [out_state]
-        # tensor array concat assumes axis == 0 for now
-        # return torch.cat(outputs, -1), output_states
-        return torch.cat(outputs, 0), output_states
-
-
-def init_stacked_lstm(num_layers, layer, first_layer_args, other_layer_args):
-    layers = [layer(*first_layer_args)] + [layer(*other_layer_args) for _ in range(num_layers - 1)]
-    return nn.ModuleList(layers)
-
-
-class StackedLSTM(jit.ScriptModule):
-    __constants__ = ["layers"]  # Necessary for iterating through self.layers
-
-    def __init__(self, num_layers, layer, first_layer_args, other_layer_args):
-        super().__init__()
-        self.layers = init_stacked_lstm(num_layers, layer, first_layer_args, other_layer_args)
-
-    @jit.script_method
-    def forward(self, input, states):
-        # type: (Tensor, List[Tuple[Tensor, Tensor]]) -> Tuple[Tensor, List[Tuple[Tensor, Tensor]]]
-        # List[LSTMState]: One state per layer
-        output_states = jit.annotate(List[Tuple[Tensor, Tensor]], [])
-        output = input
-        for (i, rnn_layer) in enumerate(self.layers):
-            state = states[i]
-            output, out_state = rnn_layer(output, state)
-            output_states += [out_state]
-        return output, output_states
-
-
-class StackedBidirLSTM(jit.ScriptModule):
-    __constants__ = ["layers"]  # Necessary for iterating through self.layers
-
-    def __init__(self, num_layers, layer, first_layer_args, other_layer_args):
-        super(StackedBidirLSTM, self).__init__()
-        self.layers = init_stacked_lstm(num_layers, layer, first_layer_args, other_layer_args)
-
-    @jit.script_method
-    def forward(self, input, states):
-        # type: (Tensor, List[List[Tuple[Tensor, Tensor]]]) -> Tuple[Tensor, List[List[Tuple[Tensor, Tensor]]]]
-        # List[List[LSTMState]]: The outer list is for layers,
-        #                        inner list is for directions.
-        output_states = jit.annotate(List[List[Tuple[Tensor, Tensor]]], [])
-        output = input
-        for (i, rnn_layer) in enumerate(self.layers):
-            state = states[i]
-            output, out_state = rnn_layer(output, state)
-            output_states += [out_state]
-        return output, output_states
-
-
 def lstm(input_size, hidden_size):
+    print("yongwww, input_size: {}, hidden_size: {}".format(input_size, hidden_size))
     return LSTMLayer(LayerNormLSTMCell, input_size, hidden_size)
+    # lstm(input_size, hidden_size).eval()
+    """
+    input_name = "input"
+    states_name = "states"
+    seq_len = 7
+    batch = 1
+    input_size = 3
+    hidden_size = 4
+    num_layers = 3
+    """
 
 
 def stacked_lstm(input_size, hidden_size, num_layers):
@@ -268,8 +189,8 @@ def convert_list_to_vmobj(py_lst):
 def test_custom_lstm():
     input_name = "input"
     states_name = "states"
-    seq_len = 5
-    batch = 2
+    seq_len = 7
+    batch = 1
     input_size = 3
     hidden_size = 4
     num_layers = 3
@@ -284,41 +205,14 @@ def test_custom_lstm():
         (states_name, (state_tensor_shape, state_tensor_shape)),
     ]
 
-    input_shapes_stacked = [
-        (input_name, (seq_len, batch, input_size)),
-        (
-            states_name,
-            [(state_tensor_shape, state_tensor_shape), (state_tensor_shape, state_tensor_shape)],
-        ),
-    ]
-
-    input_shapes_stacked_bidir = [
-        (input_name, (seq_len, batch, input_size)),
-        (
-            states_name,
-            [
-                [(state_tensor_shape, state_tensor_shape) for _ in range(2)]
-                for _ in range(num_layers)
-            ],
-        ),
-    ]
-
     states = [
         (torch.randn(state_tensor_shape), torch.randn(state_tensor_shape))
         for _ in range(num_layers)
     ]
 
-    bidir_states = [
-        (torch.randn(state_tensor_shape), torch.randn(state_tensor_shape)) for _ in range(2)
-    ]
-
-    stacked_bidir_states = [
-        [(torch.randn(state_tensor_shape), torch.randn(state_tensor_shape)) for _ in range(2)]
-        for _ in range(num_layers)
-    ]
-
     models = [
         ("lstm", lstm(input_size, hidden_size).eval(), states[0], input_shapes),
+        """
         (
             "stacked",
             stacked_lstm(input_size, hidden_size, num_layers).eval(),
@@ -326,6 +220,7 @@ def test_custom_lstm():
             input_shapes_stacked,
         ),
         ("bidir", bidir_lstm(input_size, hidden_size).eval(), bidir_states, input_shapes_stacked),
+        """
         # TODO(masahi): stacked bidir seems to have a rare accuracy issue
         # (
         #     "stacked_bidir",
@@ -333,11 +228,12 @@ def test_custom_lstm():
         #     stacked_bidir_states,
         #     input_shapes_stacked_bidir,
         # ),
-    ]
+    ]  # todo
 
     for (name, raw_model, states, input_shapes) in models:
         script_module = torch.jit.script(raw_model)
         mod, params = from_pytorch(script_module, input_shapes)
+        print("relay lstm mod: ", mod)
 
         with torch.no_grad():
             pt_result = raw_model(inp.clone(), states)
@@ -366,3 +262,7 @@ def test_custom_lstm():
         for tgt, dev in tvm.testing.enabled_targets():
             print("Running %s on target %s" % (name, tgt))
             run_and_compare(mod, params, pt_result, target=tgt, device=dev)
+
+
+if __name__ == "__main__":
+    test_custom_lstm()
