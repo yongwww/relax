@@ -47,12 +47,12 @@
 import org.jenkinsci.plugins.pipeline.modeldefinition.Utils
 // NOTE: these lines are scanned by docker/dev_common.sh. Please update the regex as needed. -->
 ci_lint = 'tlcpack/ci-lint:v0.69'
-ci_gpu = 'tlcpack/ci-gpu:v0.84'
-ci_cpu = 'tlcpack/ci-cpu:v0.83'
-ci_wasm = 'tlcpack/ci-wasm:v0.73'
-ci_i386 = 'tlcpack/ci-i386:v0.76'
-ci_qemu = 'tlcpack/ci-qemu:v0.13'
-ci_arm = 'tlcpack/ci-arm:v0.09'
+ci_gpu = 'tlcpack/ci-gpu:v0.82'
+ci_cpu = 'tlcpack/ci-cpu:v0.82'
+ci_wasm = 'tlcpack/ci-wasm:v0.72'
+ci_i386 = 'tlcpack/ci-i386:v0.75'
+ci_qemu = 'tlcpack/ci-qemu:v0.11'
+ci_arm = 'tlcpack/ci-arm:v0.08'
 ci_hexagon = 'tlcpack/ci-hexagon:v0.02'
 // <--- End of regex-scanned config.
 
@@ -276,12 +276,25 @@ def cpp_unittest(image) {
 
 stage('Build and Test') {
   if (is_docs_only_build != 1) {
-    node('CPU') {
-      ws(per_exec_ws('tvm/build-cpu')) {
-        init_git()
-        sh "${docker_run} ${ci_cpu} ./tests/scripts/task_config_build_cpu.sh build"
-        make(ci_cpu, 'build', '-j2')
-        sh "${docker_run} ${ci_cpu} ./tests/scripts/task_python_integration.sh"
+    parallel 'BUILD: GPU': {
+      node('GPU') {
+        ws(per_exec_ws('tvm/build-gpu')) {
+          init_git()
+          sh "${docker_run} ${ci_gpu} nvidia-smi"
+          sh "${docker_run}  ${ci_gpu} ./tests/scripts/task_config_build_gpu.sh build"
+          make("${ci_gpu}", 'build', '-j2')
+          sh "${docker_run} ${ci_gpu} ./tests/scripts/task_python_integration_gpuonly.sh"
+        }
+      }
+    },
+    'BUILD: CPU': {
+      node('CPU') {
+        ws(per_exec_ws('tvm/build-cpu')) {
+          init_git()
+          sh "${docker_run} ${ci_cpu} ./tests/scripts/task_config_build_cpu.sh build"
+          make(ci_cpu, 'build', '-j2')
+          sh "${docker_run} ${ci_cpu} ./tests/scripts/task_python_integration.sh"
+        }
       }
     }
   } else {
