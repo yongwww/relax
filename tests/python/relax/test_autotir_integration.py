@@ -28,7 +28,7 @@ from tvm.meta_schedule import ReplayTraceConfig, tune_tir
 from tvm.meta_schedule.database import PyDatabase, Workload, TuningRecord
 from tvm.meta_schedule.integration import extract_task_from_relax
 from tvm.meta_schedule.utils import derived_object
-from tvm.meta_schedule.search_strategy import EvolutionarySearchConfig
+from tvm import meta_schedule as ms
 from tvm import transform
 import time
 import pytest
@@ -179,9 +179,11 @@ def test_autotir(dev: str):
             sch = tune_tir(
                 mod=task.mod,
                 target=target,
-                config=EvolutionarySearchConfig(
+                config=ms.EvolutionarySearchConfig(
                     num_trials_per_iter=32,
-                    num_trials_total=32,
+                    max_trials_per_task=32,
+                    max_trials_global=32,
+                    init_min_unmeasured=50,
                 ),
                 work_dir=work_dir,
                 database=database,

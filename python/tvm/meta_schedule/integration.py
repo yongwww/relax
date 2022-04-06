@@ -15,12 +15,12 @@
 # specific language governing permissions and limitations
 # under the License.
 """Meta schedule integration with high-level IR"""
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Tuple
 
 import numpy as np  # type: ignore
 import tvm.runtime.ndarray as nd
 from tvm._ffi import get_global_func, register_object
-from tvm.ir import IRModule, transform
+from tvm.ir import IRModule, transform, structural_hash, structural_equal
 from tvm.relay import Any
 from tvm.relay import Function as RelayFunc
 from tvm.runtime import NDArray, Object
@@ -251,6 +251,49 @@ def extract_task_from_relay(
         return list(reversed(tasks))
 
 
+def deduplicate_extracted_tasks(
+    mods: List[IRModule],
+) -> Tuple[List[IRModule], List[int]]:
+    """Remove duplicate modules.
+    Parameters
+    ----------
+    mods : List[IRModule]
+        The list of IRModule.
+    Returns
+    -------
+    tasks : Tuple[List[IRModule], List[int]]
+        A tuple containing the deduplicated modules and the count for each module.
+    """
+    hash2modules: Dict[int, List[IRModule]] = {}
+    hash2counts: Dict[int, List[int]] = {}
+    for mod in mods:
+        shash = structural_hash(mod)
+        if shash in hash2modules:
+            is_dup = False
+            for i, md in enumerate(hash2modules[shash]):
+                # duplicate module was found
+                if structural_equal(mod, md):
+                    hash2counts[shash][i] += 1
+                    is_dup = True
+                    break
+            if is_dup is False:
+                # hash conflict but actually different modules
+                hash2modules[shash].append(mod)
+                hash2counts[shash].append(1)
+
+        else:
+            hash2modules[shash] = [mod]
+            hash2counts[shash] = [1]
+
+    dedup: List[IRModule] = []
+    count: List[int] = []
+    for shash in hash2modules:
+        for i, mod in enumerate(hash2modules[shash]):
+            dedup.append(mod)
+            count.append(hash2counts[shash][i])
+    return dedup, count
+
+
 def extract_task_from_relax(mod: Union[IRModule, RelaxFunc], target: Target) -> List[ExtractedTask]:
     """Extract tuning tasks from a relax program.
 
@@ -272,12 +315,13 @@ def extract_task_from_relax(mod: Union[IRModule, RelaxFunc], target: Target) -> 
         target = Target(target)
 
     tir_partitions = tir_partitioner(mod)
+    tir_mods, tir_counts = deduplicate_extracted_tasks(tir_partitions)
 
     tasks = []
-    for tir_mod in tir_partitions:
+    for i, tir_mod in enumerate(tir_mods):
         task_name = tir_mod.get_global_vars()[0].name_hint
         # The second arg to ExtractedTask is supposed to be a high-level IRModule,
         # passing tir_mod as a workaround.
-        tasks.append(ExtractedTask(task_name, tir_mod, target, [tir_mod]))
+        tasks.append(ExtractedTask(task_name, tir_mod, target, [tir_mod], tir_counts[i]))
 
     return tasks
