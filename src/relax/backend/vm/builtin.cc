@@ -21,6 +21,7 @@
  */
 #include <tvm/runtime/container/adt.h>
 #include <tvm/runtime/data_type.h>
+#include <tvm/relax/type.h>
 #include <tvm/runtime/device_api.h>
 #include <tvm/runtime/logging.h>
 #include <tvm/runtime/memory.h>
@@ -43,6 +44,15 @@ TVM_REGISTER_GLOBAL("vm.builtin.copy").set_body_typed([](NDArray src) { return s
 
 TVM_REGISTER_GLOBAL("vm.builtin.alloc_shape_heap").set_body_typed([](ShapeTuple size) {
   return NDArray::Empty(size, DLDataType{kDLInt, 64, 1}, DLDevice{kDLCPU, 0});
+});
+
+TVM_REGISTER_GLOBAL("vm.builtin.tensor_list_stack").set_body([](TVMArgs args, TVMRetValue* rv) {
+  // args[0]: ObjectType, args[1]: element_shape, args[2]: element_dtype, args[3]: num_elements
+  relax::ObjectType input_handle = args[0]; // DLTensor, vector<ObjectRef>
+  ShapeTuple element_shape = args[1];
+  DataType element_dtype = args[2]; // get dtype automatically
+  size_t num_elements = static_cast<size_t>(args[3]);
+  *rv = std::move(input_handle);//std::move(ret);
 });
 
 TVM_REGISTER_GLOBAL("vm.builtin.alloc_closure").set_body([](TVMArgs args, TVMRetValue* rv) {

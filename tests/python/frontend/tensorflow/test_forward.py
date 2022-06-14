@@ -148,6 +148,8 @@ def run_tvm_graph(
         convert_config=convert_config,
     )
 
+    print("relay mod: \n", mod)
+
     dev = tvm.device(target, 0)
     if mode == "debug":
         inputs = []
@@ -1608,8 +1610,8 @@ def test_tensor_array_size():
 
 def test_tensor_array_stack():
     def run(dtype_str, infer_shape):
-        if package_version.parse(tf.VERSION) >= package_version.parse("1.15.0"):
-            pytest.skip("Needs fixing for tflite >= 1.15.0")
+        # if package_version.parse(tf.VERSION) >= package_version.parse("1.15.0"):
+        #    pytest.skip("Needs fixing for tflite >= 1.15.0")
 
         with tf.Graph().as_default():
             dtype = tf_dtypes[dtype_str]
@@ -1619,11 +1621,11 @@ def test_tensor_array_stack():
             ta2 = ta1.scatter(scatter_indices, t)
             t1 = ta2.stack()
             print(t1)
-            g = tf.get_default_graph()
+            g = tf.compat.v1.get_default_graph().as_graph_def(add_shapes=True)
 
             compare_tf_with_tvm([], [], ["TensorArrayStack/TensorArrayGatherV3:0"], mode="vm")
 
-    for dtype in ["float32", "int8"]:
+    for dtype in ["float32"]:
         run(dtype, True)
 
 
@@ -5678,4 +5680,5 @@ def test_invert_permutation():
 
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    test_tensor_array_stack()
+    # pytest.main([__file__])

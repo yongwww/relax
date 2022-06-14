@@ -99,6 +99,24 @@ Expr MakeCallTIR(Expr func, Tuple args, Expr output_shape, Type output_type,
 
 TVM_REGISTER_GLOBAL("relax.op.call_tir").set_body_typed(MakeCallTIR);
 
+
+// tensor_list_stack
+
+RELAY_REGISTER_OP("relax.tensor_list_stack")
+    .set_num_inputs(4)
+    .add_argument("input_handle", "Expr", "The input tensor list.")
+    .add_argument("element_shape", "Expr", "The shape of each element.")
+    .add_argument("element_dtype", "Expr", "The data type of each element.")
+    .add_argument("num_elements", "Expr", "The number of elements")
+    .set_attr<FInferType>("FInferType", ReturnVoidType); // todo (infertype)
+
+Expr TensorListStack(Expr input_handle, Expr element_shape, Expr element_dtype, Expr num_elements) {
+  static const Op& op = Op::Get("relax.tensor_list_stack");
+  return Call(op, {input_handle, element_shape, element_dtype, num_elements}, {}, {});
+}
+
+TVM_REGISTER_GLOBAL("relax.op.tensor_list_stack").set_body_typed(TensorListStack);
+
 // make_closure
 
 RELAY_REGISTER_OP("relax.make_closure")

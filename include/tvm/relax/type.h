@@ -68,7 +68,7 @@ class ObjectTypeNode : public TypeNode {
   TVM_DECLARE_FINAL_OBJECT_INFO(ObjectTypeNode, TypeNode);
 };
 
-class ObjectType : public Type {
+class ObjectType : public Type { // yongwww
  public:
   TVM_DLL ObjectType(Span span = Span());
 
