@@ -25,6 +25,7 @@ from tvm import relax as rx, tir
 import tvm
 from .expr import (
     Expr,
+    VarBinding,
     te_tensor,
     Var,
     ShapeExpr,
@@ -303,6 +304,22 @@ class BlockBuilder(Object):
             A newly created variable that gets bound to the input expr.
         """
         return _ffi_api.BlockBuilderEmit(self, expr)
+
+    def emit_varbinding(self, varbinding: VarBinding) -> Var:
+        """Emit a varbinding.
+        bind the expr to the variable.
+
+        Parameters
+        ----------
+        expr : tvm.relax.VarBinding
+            The VarBinding to be emitted.
+
+        Returns
+        -------
+        ret : tvm.relax.Var
+            A variable in varbinding.
+        """
+        return _ffi_api.BlockBuilderEmitVarBinding(self, varbinding)
 
     def call_te(self, func: Callable, *args: Any, **kwargs: Any) -> Expr:
         """Generate a call node according to the te function.

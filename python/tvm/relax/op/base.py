@@ -16,6 +16,8 @@
 """The base Relax operators."""
 from typing import Union, List, Optional
 
+# from tvm.relax import ObjectType
+
 from tvm.runtime.object import Object
 
 from . import _ffi_api
@@ -128,3 +130,52 @@ def invoke_closure(
         args = Tuple(args)
 
     return _ffi_api.invoke_closure(closure, args)
+
+
+def empty_list() -> List[Expr]:
+    """
+    Create an empty list of tvm NDArray.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    ret: List[Expr]
+        The empty list.
+    """
+
+    return _ffi_api.empty_list()
+
+
+def tensor_list_stack(
+    input_handle,  # ObjectType,
+    element_shape: Expr,
+    element_dtype: Expr,
+    num_elements: Expr,
+) -> Expr:
+    """
+    Stack the Tensor List.
+
+    Parameters
+    ----------
+    input_handle : ObjectType
+        The input tensor list.
+
+    element_shape : Expr
+        The shape of each element.
+
+    element_dtype: Expr
+        The data type of each element.
+
+    num_elements: Expr
+        The number of elements
+
+
+    Returns
+    -------
+    ret: Expr
+        The result tensor.
+    """
+
+    return _ffi_api.tensor_list_stack(input_handle, element_shape, element_dtype, num_elements)

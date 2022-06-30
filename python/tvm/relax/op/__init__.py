@@ -20,4 +20,5 @@
 # Operators
 from .base import *
 from .tensor import *
+from .tensor_list import *
 from .op_attrs import *

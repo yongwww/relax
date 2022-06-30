@@ -95,6 +95,11 @@ class CodeGenVM : public ExprFunctor<Instruction::Arg(const Expr&)> {
         ICHECK(binding->IsInstance<VarBindingNode>());
         Expr value = Downcast<VarBinding>(binding)->value;
         Var var = Downcast<VarBinding>(binding)->var;
+        if (auto* gv = value.as<GlobalVarNode>()) {
+          // todo(@yongwww, @seanlatias): Add DeadCodeElimination
+          var_globalvar_map_.insert({var, GetRef<GlobalVar>(gv)});
+          continue;
+        }
         Instruction::Arg reg = this->VisitExpr(value);
         this->var_register_map_.insert({var, reg.data});
       }
@@ -126,6 +131,8 @@ class CodeGenVM : public ExprFunctor<Instruction::Arg(const Expr&)> {
         return EmitAllocClosure(call);
       } else if (call_node->op == invoke_closure_op_) {
         return EmitInvokeClosure(call);
+      } else if (call_node->op == empty_list_op_) {
+        return EmitEmptyList(call);
       } else {
         // every "normal" operator is lowered to a global var in the IR module. The Attrs for those
         // ops are handled in a pass when lowering them to TIR.
@@ -138,6 +145,10 @@ class CodeGenVM : public ExprFunctor<Instruction::Arg(const Expr&)> {
     } else if (auto* gvar = call_node->op.as<GlobalVarNode>()) {
       // GlobalVar can be reference to a Relax function or a TIR primfunc
       name = gvar->name_hint;
+    } else if (auto* var = call_node->op.as<VarNode>()) {
+      auto it = this->var_globalvar_map_.find(GetRef<Var>(var));
+      ICHECK(it != this->var_globalvar_map_.end());
+      name = it->second->name_hint;
     } else {
       LOG(FATAL) << "CodeGenVM does not support calls to " << call_node->op->GetTypeKey();
     }
@@ -419,6 +430,16 @@ class CodeGenVM : public ExprFunctor<Instruction::Arg(const Expr&)> {
     return Instruction::Arg(Instruction::kRegister, dst_register);
   }
 
+  Instruction::Arg EmitEmptyList(const Call& call_node) {
+    ICHECK(call_node->args.size() == 0);
+
+    std::vector<Instruction::Arg> args;
+
+    size_t dst_register = NewRegister();
+    builder_->EmitCall("vm.builtin.empty_list", args, dst_register);
+    return Instruction::Arg(Instruction::kRegister, dst_register);
+  }
+
   Instruction::Arg EmitInvokeClosure(const Call& call_node) {
     ICHECK(call_node->args.size() == 2);
     ICHECK(call_node->args[0]->IsInstance<VarNode>());
@@ -503,6 +524,8 @@ class CodeGenVM : public ExprFunctor<Instruction::Arg(const Expr&)> {
   size_t registers_num_ = 0;
   /*! \brief Map from var to register number. */
   std::unordered_map<Var, RegName, ObjectPtrHash, ObjectPtrEqual> var_register_map_;
+  /*! \brief Map from var to global_var. */
+  std::unordered_map<Var, GlobalVar, ObjectPtrHash, ObjectPtrEqual> var_globalvar_map_;
   /*! \brief Cache ops that need to be frequently used later to reduce lookup overhead. */
   const Op& alloc_storage_op_ = Op::Get("relax.vm.builtin.alloc_storage");
   const Op& alloc_tensor_op_ = Op::Get("relax.vm.builtin.alloc_tensor");
@@ -512,6 +535,7 @@ class CodeGenVM : public ExprFunctor<Instruction::Arg(const Expr&)> {
   const Op& unique_op_ = Op::Get("relax.unique");
   const Op& make_closure_op_ = Op::Get("relax.make_closure");
   const Op& invoke_closure_op_ = Op::Get("relax.invoke_closure");
+  const Op& empty_list_op_ = Op::Get("relax.empty_list");
 };
 
 void VMCodeGen::CodeGen(IRModule rx_mod) {

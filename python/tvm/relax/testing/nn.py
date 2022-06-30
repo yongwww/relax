@@ -17,11 +17,11 @@
 # pylint: disable=redefined-builtin
 """PyTorch-like nn.Module API for constructing workloads."""
 
-
+import numpy as np
 from typing import List, Any, Callable
 import tvm
 from tvm import relax, topi, tir
-import numpy as np
+from tvm.runtime import container as _container
 
 
 def emit_te(func: Callable, *args: Any, **kwargs: Any) -> relax.Var:
@@ -114,7 +114,9 @@ def _unpack_params(value: object) -> List[relax.Var]:
 def init_params(mod: tvm.IRModule) -> List[tvm.nd.array]:
     """Utility function to initialize model's parameters."""
     shape_dict = {v.name_hint: v.shape_ for v in mod["main"].params}
+
     params = []
+
     for k, v in shape_dict.items():
         if k.startswith("data"):
             continue
@@ -125,7 +127,19 @@ def init_params(mod: tvm.IRModule) -> List[tvm.nd.array]:
                     shape.append(int(i))
                 else:
                     raise TypeError("cannot initialize for unknown-shape parameters.")
-            params.append(tvm.nd.array(np.zeros(shape).astype(np.float32)))
+            params.append(tvm.nd.array(np.ones(shape).astype(np.float32)))
+        elif isinstance(v, relax.Tuple):
+            tup = []
+            for field in v.fields:
+                shape = []
+                for i in field:
+                    if isinstance(i, tir.IntImm):
+                        shape.append(int(i))
+                    else:
+                        raise TypeError("cannot initialize for unknown-shape parameters.")
+                tup.append(tvm.nd.array(np.ones(shape).astype(np.float32)))
+            # params.append(list(tup))
+            params.append(_container.ADT(0, tup))
         else:
             raise TypeError("cannot initialize for unknown-shape parameters.")
     return params

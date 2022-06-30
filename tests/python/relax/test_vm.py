@@ -936,5 +936,39 @@ def test_set_input():
     tvm.testing.assert_allclose(res0.numpy(), res1.numpy(), rtol=1e-7, atol=1e-7)
 
 
+def test_tensor_list():
+    @tvm.script.ir_module
+    class TestTensorList:
+        @R.function
+        def main(x: Tensor((2, 3), "float32"), y: Tensor((2, 3), "float32")):
+            # builtin.empty_list
+            lst = relax.empty_list()
+            gv0 = relax.tensor_list_write(lst, relax.const(0), x)
+            gv1 = relax.tensor_list_write(gv0, relax.const(1), y)
+            gv2 = relax.tensor_list_stack(gv1)
+            gv3 = relax.tensor_list_read(gv1, relax.const(0))
+            gv4 = relax.tensor_list_read(gv1, relax.const(1))
+            return gv2, gv3, gv4
+
+    # build
+    # run
+    mod = TestTensorList
+    print("printing: \n", mod)
+    target = tvm.target.Target("llvm", host="llvm")
+    ex = relax.vm.build(mod, target)
+    print("ex: \n ", ex.as_text())
+    vm = relax.VirtualMachine(ex, tvm.cpu())
+    x_inp = tvm.nd.array(np.random.rand(2, 3).astype("float32"))
+    y_inp = tvm.nd.array(np.random.rand(2, 3).astype("float32"))
+    res = vm["main"](x_inp, y_inp)
+    print("0  ### ")
+    print(res[0])
+    print("1  ### ")
+    print(res[1])
+    print("2  ### ")
+    print(res[2])
+
+
 if __name__ == "__main__":
-    pytest.main([__file__])
+    test_tensor_list()
+    # pytest.main([__file__])
