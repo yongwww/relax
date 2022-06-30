@@ -1,0 +1,310 @@
+graph:  graph(%self : __torch__.LSTMLayer,
+      %input.1 : Tensor,
+      %state.1 : (Tensor, Tensor)):
+  %3 : bool = prim::Constant[value=1]() # apps/relax_examples/lstm.py:79:8
+  %4 : int = prim::Constant[value=0]() # apps/relax_examples/lstm.py:79:34
+  %outputs.1 : Tensor[] = prim::ListConstruct()
+  %6 : int = aten::size(%input.1, %4) # apps/relax_examples/lstm.py:79:23
+  %outputs : Tensor[], %state : (Tensor, Tensor) = prim::Loop(%6, %3, %outputs.1, %state.1) # apps/relax_examples/lstm.py:79:8
+    block0(%i.1 : int, %outputs.11 : Tensor[], %state.11 : (Tensor, Tensor)):
+      %cell : __torch__.LayerNormLSTMCell = prim::GetAttr[name="cell"](%self)
+      %13 : Tensor = aten::select(%input.1, %4, %i.1) # apps/relax_examples/lstm.py:80:35
+      %14 : (Tensor, (Tensor, Tensor)) = prim::CallMethod[name="forward"](%cell, %13, %state.11) # apps/relax_examples/lstm.py:80:25
+      %out.1 : Tensor, %state.5 : (Tensor, Tensor) = prim::TupleUnpack(%14)
+      %17 : Tensor[] = prim::ListConstruct(%out.1)
+      %outputs.5 : Tensor[] = aten::add_(%outputs.11, %17) # apps/relax_examples/lstm.py:81:12
+      -> (%3, %outputs.5, %state.5)
+  %19 : Tensor = aten::stack(%outputs, %4) # apps/relax_examples/lstm.py:82:15
+  %20 : (Tensor, (Tensor, Tensor)) = prim::TupleConstruct(%19, %state)
+  return (%20)
+
+relay lstm mod:  type List[A] {
+  Cons(A, List[A]),
+  Nil,
+}
+
+type Option[A] {
+  Some(A),
+  None,
+}
+
+type Tree[A] {
+  Rose(A, List[Tree[A]]),
+}
+
+type static_tensor_float32_1_4_t {
+  tensor_nil_float32_1_4,
+  tensor_constructor_float32_1_4(Tensor[(1, 4), float32]),
+}
+
+type static_tensor_float32_4_t {
+  tensor_nil_float32_4,
+  tensor_constructor_float32_4(Tensor[(4), float32]),
+}
+
+type static_tensor_float32_any_1_4_t {
+  tensor_nil_float32_any_1_4,
+  tensor_constructor_float32_any_1_4(Tensor[(?, 1, 4), float32]),
+}
+
+type static_tensor_float32_any_4_t {
+  tensor_nil_float32_any_4,
+  tensor_constructor_float32_any_4(Tensor[(?, 4), float32]),
+}
+
+type static_tensor_float32_any_any_1_4_t {
+  tensor_nil_float32_any_any_1_4,
+  tensor_constructor_float32_any_any_1_4(Tensor[(?, ?, 1, 4), float32]),
+}
+
+type tensor_float16_t {
+  tensor_nil_float16,
+  tensor0_float16(float16),
+  tensor1_float16(Tensor[(?), float16]),
+  tensor2_float16(Tensor[(?, ?), float16]),
+  tensor3_float16(Tensor[(?, ?, ?), float16]),
+  tensor4_float16(Tensor[(?, ?, ?, ?), float16]),
+  tensor5_float16(Tensor[(?, ?, ?, ?, ?), float16]),
+  tensor6_float16(Tensor[(?, ?, ?, ?, ?, ?), float16]),
+}
+
+type tensor_float32_t {
+  tensor_nil_float32,
+  tensor0_float32(float32),
+  tensor1_float32(Tensor[(?), float32]),
+  tensor2_float32(Tensor[(?, ?), float32]),
+  tensor3_float32(Tensor[(?, ?, ?), float32]),
+  tensor4_float32(Tensor[(?, ?, ?, ?), float32]),
+  tensor5_float32(Tensor[(?, ?, ?, ?, ?), float32]),
+  tensor6_float32(Tensor[(?, ?, ?, ?, ?, ?), float32]),
+}
+
+type tensor_float64_t {
+  tensor_nil_float64,
+  tensor0_float64(float64),
+  tensor1_float64(Tensor[(?), float64]),
+  tensor2_float64(Tensor[(?, ?), float64]),
+  tensor3_float64(Tensor[(?, ?, ?), float64]),
+  tensor4_float64(Tensor[(?, ?, ?, ?), float64]),
+  tensor5_float64(Tensor[(?, ?, ?, ?, ?), float64]),
+  tensor6_float64(Tensor[(?, ?, ?, ?, ?, ?), float64]),
+}
+
+type tensor_int16_t {
+  tensor_nil_int16,
+  tensor0_int16(int16),
+  tensor1_int16(Tensor[(?), int16]),
+  tensor2_int16(Tensor[(?, ?), int16]),
+  tensor3_int16(Tensor[(?, ?, ?), int16]),
+  tensor4_int16(Tensor[(?, ?, ?, ?), int16]),
+  tensor5_int16(Tensor[(?, ?, ?, ?, ?), int16]),
+  tensor6_int16(Tensor[(?, ?, ?, ?, ?, ?), int16]),
+}
+
+type tensor_int32_t {
+  tensor_nil_int32,
+  tensor0_int32(int32),
+  tensor1_int32(Tensor[(?), int32]),
+  tensor2_int32(Tensor[(?, ?), int32]),
+  tensor3_int32(Tensor[(?, ?, ?), int32]),
+  tensor4_int32(Tensor[(?, ?, ?, ?), int32]),
+  tensor5_int32(Tensor[(?, ?, ?, ?, ?), int32]),
+  tensor6_int32(Tensor[(?, ?, ?, ?, ?, ?), int32]),
+}
+
+type tensor_int64_t {
+  tensor_nil_int64,
+  tensor0_int64(int64),
+  tensor1_int64(Tensor[(?), int64]),
+  tensor2_int64(Tensor[(?, ?), int64]),
+  tensor3_int64(Tensor[(?, ?, ?), int64]),
+  tensor4_int64(Tensor[(?, ?, ?, ?), int64]),
+  tensor5_int64(Tensor[(?, ?, ?, ?, ?), int64]),
+  tensor6_int64(Tensor[(?, ?, ?, ?, ?, ?), int64]),
+}
+
+type tensor_int8_t {
+  tensor_nil_int8,
+  tensor0_int8(int8),
+  tensor1_int8(Tensor[(?), int8]),
+  tensor2_int8(Tensor[(?, ?), int8]),
+  tensor3_int8(Tensor[(?, ?, ?), int8]),
+  tensor4_int8(Tensor[(?, ?, ?, ?), int8]),
+  tensor5_int8(Tensor[(?, ?, ?, ?, ?), int8]),
+  tensor6_int8(Tensor[(?, ?, ?, ?, ?, ?), int8]),
+}
+
+type tensor_uint16_t {
+  tensor_nil_uint16,
+  tensor0_uint16(uint16),
+  tensor1_uint16(Tensor[(?), uint16]),
+  tensor2_uint16(Tensor[(?, ?), uint16]),
+  tensor3_uint16(Tensor[(?, ?, ?), uint16]),
+  tensor4_uint16(Tensor[(?, ?, ?, ?), uint16]),
+  tensor5_uint16(Tensor[(?, ?, ?, ?, ?), uint16]),
+  tensor6_uint16(Tensor[(?, ?, ?, ?, ?, ?), uint16]),
+}
+
+type tensor_uint8_t {
+  tensor_nil_uint8,
+  tensor0_uint8(uint8),
+  tensor1_uint8(Tensor[(?), uint8]),
+  tensor2_uint8(Tensor[(?, ?), uint8]),
+  tensor3_uint8(Tensor[(?, ?, ?), uint8]),
+  tensor4_uint8(Tensor[(?, ?, ?, ?), uint8]),
+  tensor5_uint8(Tensor[(?, ?, ?, ?, ?), uint8]),
+  tensor6_uint8(Tensor[(?, ?, ?, ?, ?, ?), uint8]),
+}
+
+def @concat[A](%xs: List[A] /* ty=List[A] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:162:21 */, %ys: List[A] /* ty=List[A] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:162:16 */) -> List[A] {
+  @foldr(Cons, %ys, %xs) /* ty=List[A] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:162:3 */
+}
+
+def @foldl[A, B](%f: fn (A, B) -> A /* ty=fn (A, B) -> A span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:115:35 */, %acc: A /* ty=A span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:116:12 */, %xs1: List[B] /* ty=List[B] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:114:10 */) -> A {
+  match (%xs1) {
+    Cons(%x: B /* ty=B span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:115:44 */, %rest: List[B] /* ty=List[B] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:115:49 */) => {
+      %0 = %f(%acc, %x) /* ty=A span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:115:35 */;
+      @foldl(%f, %0, %rest) /* ty=A span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:115:24 */
+    },
+    Nil => {
+      %acc
+    },
+  }
+}
+
+def @foldr[A, B](%f1: fn (A, B) -> B /* ty=fn (A, B) -> B span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:128:38 */, %acc1: B /* ty=B span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:129:12 */, %xs2: List[A] /* ty=List[A] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:127:10 */) -> B {
+  match (%xs2) {
+    Cons(%x1: A /* ty=A span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:128:27 */, %rest1: List[A] /* ty=List[A] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:128:48 */) => {
+      %1 = @foldr(%f1, %acc1, %rest1) /* ty=B span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:128:31 */;
+      %f1(%x1, %1) /* ty=B span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:128:24 */
+    },
+    Nil => {
+      %acc1
+    },
+  }
+}
+
+def @hd[A](%xs3: List[A] /* ty=List[A] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:50:11 */) -> A {
+  match? (%xs3) {
+    Cons(%x2: A /* ty=A span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:51:20 */, _) => {
+      %x2
+    },
+  }
+}
+
+def @main(%states: (Tensor[(1, 4), float32], Tensor[(1, 4), float32]) /* ty=(Tensor[(1, 4), float32], Tensor[(1, 4), float32]) */, %input: Tensor[(7, 1, 3), float32] /* ty=Tensor[(7, 1, 3), float32] */, %cell.weight_ih: Tensor[(16, 3), float32] /* ty=Tensor[(16, 3), float32] */, %cell.layernorm_i.weight: Tensor[(16), float32] /* ty=Tensor[(16), float32] */, %cell.layernorm_i.bias: Tensor[(16), float32] /* ty=Tensor[(16), float32] */, %cell.weight_hh: Tensor[(16, 4), float32] /* ty=Tensor[(16, 4), float32] */, %cell.layernorm_h.weight: Tensor[(16), float32] /* ty=Tensor[(16), float32] */, %cell.layernorm_h.bias: Tensor[(16), float32] /* ty=Tensor[(16), float32] */, %cell.layernorm_c.weight: Tensor[(4), float32] /* ty=Tensor[(4), float32] */, %cell.layernorm_c.bias: Tensor[(4), float32] /* ty=Tensor[(4), float32] */) -> (Tensor[(?, 1, 4), float32], (Tensor[(1, 4), float32], Tensor[(1, 4), float32])) {
+  %38 = Nil /* ty=List[Tensor[(1, 4), float32]] */;
+  %39 = (
+    let %while_loop: fn (int32, List[Tensor[(1, 4), float32]], (Tensor[(1, 4), float32], Tensor[(1, 4), float32]), Tensor[(7, 1, 3), float32]) -> (int32, List[Tensor[(1, 4), float32]], (Tensor[(1, 4), float32], Tensor[(1, 4), float32]), Tensor[(7, 1, 3), float32]) /* ty=fn (int32, List[Tensor[(1, 4), float32]], (Tensor[(1, 4), float32], Tensor[(1, 4), float32]), Tensor[(7, 1, 3), float32]) -> (int32, List[Tensor[(1, 4), float32]], (Tensor[(1, 4), float32], Tensor[(1, 4), float32]), Tensor[(7, 1, 3), float32]) */ = fn (%i.1: int32 /* ty=int32 */, %outputs.11: List[Tensor[(1, 4), float32]] /* ty=List[Tensor[(1, 4), float32]] */, %state.11: (Tensor[(1, 4), float32], Tensor[(1, 4), float32]) /* ty=(Tensor[(1, 4), float32], Tensor[(1, 4), float32]) */, %input.1: Tensor[(7, 1, 3), float32] /* ty=Tensor[(7, 1, 3), float32] */) -> (int32, List[Tensor[(1, 4), float32]], (Tensor[(1, 4), float32], Tensor[(1, 4), float32]), Tensor[(7, 1, 3), float32]) {
+      %2 = less(%i.1, 7 /* ty=int32 */) /* ty=bool */;
+      if (%2) {
+        %3 = transpose(%cell.weight_ih, axes=[1, 0]) /* ty=Tensor[(3, 16), float32] */;
+        %4 = take(%input.1, %i.1, axis=0, mode="wrap") /* ty=Tensor[(1, 3), float32] */;
+        %5 = transpose(%3, axes=[1, 0]) /* ty=Tensor[(16, 3), float32] */;
+        %6 = nn.dense(%4, %5, units=None) /* ty=Tensor[(1, 16), float32] */;
+        %7 = transpose(%cell.weight_hh, axes=[1, 0]) /* ty=Tensor[(4, 16), float32] */;
+        %8 = %state.11.0 /* ty=Tensor[(1, 4), float32] */;
+        %9 = transpose(%7, axes=[1, 0]) /* ty=Tensor[(16, 4), float32] */;
+        %10 = nn.dense(%8, %9, units=None) /* ty=Tensor[(1, 16), float32] */;
+        %11 = nn.layer_norm(%6, %cell.layernorm_i.weight, %cell.layernorm_i.bias) /* ty=Tensor[(1, 16), float32] */;
+        %12 = nn.layer_norm(%10, %cell.layernorm_h.weight, %cell.layernorm_h.bias) /* ty=Tensor[(1, 16), float32] */;
+        %13 = add(%11, %12) /* ty=Tensor[(1, 16), float32] */;
+        %14 = split(%13, indices_or_sections=[4, 8, 12], axis=1) /* ty=(Tensor[(1, 4), float32], Tensor[(1, 4), float32], Tensor[(1, 4), float32], Tensor[(1, 4), float32]) */;
+        %15 = %14.3 /* ty=Tensor[(1, 4), float32] */;
+        %16 = %14.1 /* ty=Tensor[(1, 4), float32] */;
+        %17 = sigmoid(%16) /* ty=Tensor[(1, 4), float32] */;
+        %18 = %state.11.1 /* ty=Tensor[(1, 4), float32] */;
+        %19 = %14.0 /* ty=Tensor[(1, 4), float32] */;
+        %20 = %14.2 /* ty=Tensor[(1, 4), float32] */;
+        %21 = sigmoid(%19) /* ty=Tensor[(1, 4), float32] */;
+        %22 = tanh(%20) /* ty=Tensor[(1, 4), float32] */;
+        %23 = multiply(%17, %18) /* ty=Tensor[(1, 4), float32] */;
+        %24 = multiply(%21, %22) /* ty=Tensor[(1, 4), float32] */;
+        %25 = add(%23, %24) /* ty=Tensor[(1, 4), float32] */;
+        %26 = nn.layer_norm(%25, %cell.layernorm_c.weight, %cell.layernorm_c.bias) /* ty=Tensor[(1, 4), float32] */;
+        %27 = sigmoid(%15) /* ty=Tensor[(1, 4), float32] */;
+        %28 = tanh(%26) /* ty=Tensor[(1, 4), float32] */;
+        %29 = multiply(%27, %28) /* ty=Tensor[(1, 4), float32] */;
+        %30 = (%29, %26) /* ty=(Tensor[(1, 4), float32], Tensor[(1, 4), float32]) */;
+        %31 = (%29, %30) /* ty=(Tensor[(1, 4), float32], (Tensor[(1, 4), float32], Tensor[(1, 4), float32])) */;
+        %32 = %31.0 /* ty=Tensor[(1, 4), float32] */;
+        %33 = Nil /* ty=List[Tensor[(1, 4), float32]] */;
+        %34 = Cons(%32, %33) /* ty=List[Tensor[(1, 4), float32]] */;
+        %35 = add(%i.1, 1 /* ty=int32 */) /* ty=int32 */;
+        %36 = @concat(%outputs.11, %34) /* ty=List[Tensor[(1, 4), float32]] */;
+        %37 = %31.1 /* ty=(Tensor[(1, 4), float32], Tensor[(1, 4), float32]) */;
+        %while_loop(%35, %36, %37, %input.1) /* ty=(int32, List[Tensor[(1, 4), float32]], (Tensor[(1, 4), float32], Tensor[(1, 4), float32]), Tensor[(7, 1, 3), float32]) */
+      } else {
+        (%i.1, %outputs.11, %state.11, %input.1) /* ty=(int32, List[Tensor[(1, 4), float32]], (Tensor[(1, 4), float32], Tensor[(1, 4), float32]), Tensor[(7, 1, 3), float32]) */
+      }
+    } /* ty=fn (int32, List[Tensor[(1, 4), float32]], (Tensor[(1, 4), float32], Tensor[(1, 4), float32]), Tensor[(7, 1, 3), float32]) -> (int32, List[Tensor[(1, 4), float32]], (Tensor[(1, 4), float32], Tensor[(1, 4), float32]), Tensor[(7, 1, 3), float32]) */;
+    %while_loop
+  );
+  %40 = %39(0 /* ty=int32 */, %38, %states, %input) /* ty=(int32, List[Tensor[(1, 4), float32]], (Tensor[(1, 4), float32], Tensor[(1, 4), float32]), Tensor[(7, 1, 3), float32]) */;
+  %41 = %40.1 /* ty=List[Tensor[(1, 4), float32]] */;
+  %42 = @map(tensor_constructor_float32_1_4, %41) /* ty=List[static_tensor_float32_1_4_t[]] */;
+  %43 = @tensor_array_stack_float32_1_4(%42) /* ty=static_tensor_float32_any_1_4_t[] */;
+  %44 = @tensor_get_data_float32_any_1_4(%43) /* ty=Tensor[(?, 1, 4), float32] */;
+  %45 = %40.2 /* ty=(Tensor[(1, 4), float32], Tensor[(1, 4), float32]) */;
+  (%44, %45) /* ty=(Tensor[(?, 1, 4), float32], (Tensor[(1, 4), float32], Tensor[(1, 4), float32])) */
+}
+
+def @map[A, B](%f2: fn (A) -> B /* ty=fn (A) -> B span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:102:43 */, %xs4: List[A] /* ty=List[A] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:101:10 */) -> List[B] {
+  match (%xs4) {
+    Cons(%x3: A /* ty=A span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:102:32 */, %rest2: List[A] /* ty=List[A] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:102:47 */) => {
+      %46 = %f2(%x3) /* ty=B span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:102:29 */;
+      %47 = @map(%f2, %rest2) /* ty=List[B] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:102:37 */;
+      Cons(%46, %47) /* ty=List[B] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:102:24 */
+    },
+    Nil => {
+      Nil /* ty=List[B] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:103:12 */
+    },
+  }
+}
+
+def @tensor_array_stack_float32_1_4(%tensor_array: List[static_tensor_float32_1_4_t[]] /* ty=List[static_tensor_float32_1_4_t[]] */) -> static_tensor_float32_any_1_4_t[] {
+  %48 = @map(@tensor_expand_dims_float32_1_4, %tensor_array) /* ty=List[static_tensor_float32_any_1_4_t[]] */;
+  %49 = @hd(%48) /* ty=static_tensor_float32_any_1_4_t[] */;
+  %50 = @tl(%48) /* ty=List[static_tensor_float32_any_1_4_t[]] */;
+  @foldl(@tensor_concatenate_float32_any_1_4, %49, %50) /* ty=static_tensor_float32_any_1_4_t[] */
+}
+
+def @tensor_concatenate_float32_any_1_4(%x4: static_tensor_float32_any_1_4_t[] /* ty=static_tensor_float32_any_1_4_t[] */, %y: static_tensor_float32_any_1_4_t[] /* ty=static_tensor_float32_any_1_4_t[] */) -> static_tensor_float32_any_1_4_t[] {
+  match? (%x4) {
+    tensor_constructor_float32_any_1_4(%t1: Tensor[(?, 1, 4), float32] /* ty=Tensor[(?, 1, 4), float32] */) => {
+      match? (%y) {
+        tensor_constructor_float32_any_1_4(%t2: Tensor[(?, 1, 4), float32] /* ty=Tensor[(?, 1, 4), float32] */) => {
+          %51 = (%t1, %t2) /* ty=(Tensor[(?, 1, 4), float32], Tensor[(?, 1, 4), float32]) */;
+          %52 = concatenate(%51) /* ty=Tensor[(?, 1, 4), float32] */;
+          tensor_constructor_float32_any_1_4(%52) /* ty=static_tensor_float32_any_1_4_t[] */
+        },
+      }
+    },
+  }
+}
+
+def @tensor_expand_dims_float32_1_4(%x5: static_tensor_float32_1_4_t[] /* ty=static_tensor_float32_1_4_t[] */) -> static_tensor_float32_any_1_4_t[] {
+  match? (%x5) {
+    tensor_constructor_float32_1_4(%t: Tensor[(1, 4), float32] /* ty=Tensor[(1, 4), float32] */) => {
+      %53 = expand_dims(%t, axis=0) /* ty=Tensor[(1, 1, 4), float32] */;
+      tensor_constructor_float32_any_1_4(%53) /* ty=static_tensor_float32_any_1_4_t[] */
+    },
+  }
+}
+
+def @tensor_get_data_float32_any_1_4(%tensor: static_tensor_float32_any_1_4_t[] /* ty=static_tensor_float32_any_1_4_t[] */) -> Tensor[(?, 1, 4), float32] {
+  match? (%tensor) {
+    tensor_constructor_float32_any_1_4(%t3: Tensor[(?, 1, 4), float32] /* ty=Tensor[(?, 1, 4), float32] */) => {
+      %t3
+    },
+  }
+}
+
+def @tl[A](%xs5: List[A] /* ty=List[A] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:59:11 */) -> List[A] {
+  match? (%xs5) {
+    Cons(_, %rest3: List[A] /* ty=List[A] span=/home/ywu/RELAX/relax/python/tvm/relay/std/prelude.rly:60:23 */) => {
+      %rest3
+    },
+  }
+}
+

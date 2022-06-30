@@ -143,7 +143,7 @@ def test_tensor_array_write():
 
 
 @tvm.testing.uses_gpu
-def test_tensor_array_stack():
+def test_tensor_array_stack():  # todo
     def run(dtype):
         mod = tvm.IRModule()
         p = Prelude(mod)
@@ -738,8 +738,7 @@ def test_static_tensor_array_stack():
         expected = [np.stack([t, t, t])]
         check_tensor_array(mod, expected, t, dtype=dtype)
 
-    run("float32", [])
-    run("int32", [2, 3])
+    run("float32", [1, 4])
 
 
 @tvm.testing.uses_gpu
@@ -782,4 +781,5 @@ def test_static_tensor_get_data():
 
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    test_static_tensor_array_stack()
+    # pytest.main([__file__])

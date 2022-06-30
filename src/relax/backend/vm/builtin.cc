@@ -21,6 +21,7 @@
  */
 #include <tvm/runtime/container/adt.h>
 #include <tvm/runtime/data_type.h>
+#include <tvm/relax/type.h>
 #include <tvm/runtime/device_api.h>
 #include <tvm/runtime/logging.h>
 #include <tvm/runtime/memory.h>
@@ -39,10 +40,24 @@ using tvm::runtime::NDArray;
 
 TVM_REGISTER_GLOBAL("vm.builtin.shape_of").set_body_method(&NDArray::Shape);
 
-TVM_REGISTER_GLOBAL("vm.builtin.copy").set_body_typed([](NDArray src) { return src; });
+TVM_REGISTER_GLOBAL("vm.builtin.copy").set_body_typed([](ObjectRef src) { return src; });
 
 TVM_REGISTER_GLOBAL("vm.builtin.alloc_shape_heap").set_body_typed([](ShapeTuple size) {
   return NDArray::Empty(size, DLDataType{kDLInt, 64, 1}, DLDevice{kDLCPU, 0});
+});
+
+TVM_REGISTER_GLOBAL("vm.builtin.tensor_list_stack").set_body([](TVMArgs args, TVMRetValue* rv) {
+  // args[0]: ObjectType, args[1]: element_shape, args[2]: element_dtype, args[3]: num_elements
+  relax::ObjectType input_handle = args[0]; // DLTensor, vector<ObjectRef>
+  ShapeTuple element_shape = args[1];
+  DataType element_dtype = args[2]; // get dtype automatically
+  size_t num_elements = static_cast<size_t>(args[3]);
+  *rv = std::move(input_handle);//std::move(ret);
+});
+
+TVM_REGISTER_GLOBAL("vm.builtin.empty_list").set_body_typed([]() {
+  Array<NDArray> out;
+  return out;
 });
 
 TVM_REGISTER_GLOBAL("vm.builtin.alloc_closure").set_body([](TVMArgs args, TVMRetValue* rv) {
@@ -75,8 +90,8 @@ TVM_REGISTER_GLOBAL("vm.builtin.invoke_closure").set_body([](TVMArgs args, TVMRe
 
   runtime::TVMArgsSetter setter(values.data(), tcodes.data());
   for (size_t i = 0; i < num_tensor_args; i++) {
-    NDArray arg = args[i + 2];
-    setter(i, arg);
+    // NDArray arg = args[i + 2];
+    setter(i, args[i + 2]);
   }
   for (size_t i = 0; i < cap_vars.size(); i++) {
     setter(i + num_tensor_args, cap_vars[i]);

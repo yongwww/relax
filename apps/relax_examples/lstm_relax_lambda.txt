@@ -1,0 +1,815 @@
+@tvm.script.ir_module(metadata=metadata)
+class Module:
+    @tir.prim_func
+    def dense(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), tir.int64(3)), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(16), tir.int64(3)), "float32"],
+        T_matmul_NT_1: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr(
+            {"global_symbol": "dense", "tir.noalias": True, "layout_free_placeholders": [1]}
+        )
+        # body
+        # with tir.block("root")
+        for i0, i1, i2 in tir.grid(tir.int64(1), tir.int64(16), tir.int64(3)):
+            with tir.block("T_matmul_NT"):
+                i = tir.axis.spatial(tir.int64(1), i0)
+                j = tir.axis.spatial(tir.int64(16), i1)
+                k = tir.axis.reduce(tir.int64(3), i2)
+                tir.reads(rxplaceholder_2[i, k], rxplaceholder_3[j, k])
+                tir.writes(T_matmul_NT_1[i, j])
+                with tir.init():
+                    T_matmul_NT_1[i, j] = tir.float32(0)
+                T_matmul_NT_1[i, j] = (
+                    T_matmul_NT_1[i, j] + rxplaceholder_2[i, k] * rxplaceholder_3[j, k]
+                )
+
+    @tir.prim_func
+    def sigmoid1(
+        rxplaceholder_1: tir.Buffer[(tir.int64(1), 4), "float32"],
+        T_sigmoid_1: tir.Buffer[(tir.int64(1), 4), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "sigmoid1", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_sigmoid"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_1[ax0, ax1])
+                tir.writes(T_sigmoid_1[ax0, ax1])
+                T_sigmoid_1[ax0, ax1] = tir.sigmoid(rxplaceholder_1[ax0, ax1], dtype="float32")
+
+    @tir.prim_func
+    def sigmoid(
+        rxplaceholder_1: tir.Buffer[(tir.int64(1), tir.int64(4)), "float32"],
+        T_sigmoid_1: tir.Buffer[(tir.int64(1), tir.int64(4)), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "sigmoid", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), tir.int64(4)):
+            with tir.block("T_sigmoid"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(tir.int64(4), i1)
+                tir.reads(rxplaceholder_1[ax0, ax1])
+                tir.writes(T_sigmoid_1[ax0, ax1])
+                T_sigmoid_1[ax0, ax1] = tir.sigmoid(rxplaceholder_1[ax0, ax1], dtype="float32")
+
+    @tir.prim_func
+    def mean(
+        rxplaceholder_1: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+        T_divide_1: tir.Buffer[(tir.int64(1), 1), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "mean", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        rxplaceholder_red_1 = tir.alloc_buffer([tir.int64(1), 1], dtype="float32")
+        for i0, i1, i2 in tir.grid(tir.int64(1), 1, tir.int64(16)):
+            with tir.block("rxplaceholder_red"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(1, i1)
+                k1 = tir.axis.reduce(tir.int64(16), i2)
+                tir.reads(rxplaceholder_1[ax0, k1])
+                tir.writes(rxplaceholder_red_1[ax0, ax1])
+                with tir.init():
+                    rxplaceholder_red_1[ax0, ax1] = tir.float32(0)
+                rxplaceholder_red_1[ax0, ax1] = (
+                    rxplaceholder_red_1[ax0, ax1] + rxplaceholder_1[ax0, k1]
+                )
+        for i0, i1 in tir.grid(tir.int64(1), 1):
+            with tir.block("T_divide"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(1, i1)
+                tir.reads(rxplaceholder_red_1[ax0, ax1])
+                tir.writes(T_divide_1[ax0, ax1])
+                T_divide_1[ax0, ax1] = rxplaceholder_red_1[ax0, ax1] * tir.float32(0.0625)
+
+    @tir.prim_func
+    def subtract(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(1), 1), "float32"],
+        T_subtract_1: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "subtract", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), tir.int64(16)):
+            with tir.block("T_subtract"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(tir.int64(16), i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, tir.int64(0)])
+                tir.writes(T_subtract_1[ax0, ax1])
+                T_subtract_1[ax0, ax1] = (
+                    rxplaceholder_2[ax0, ax1] - rxplaceholder_3[ax0, tir.int64(0)]
+                )
+
+    @tir.prim_func
+    def add2(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+        rxplaceholder_3: tir.Buffer[(1, tir.int64(16)), "float32"],
+        T_add_1: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "add2", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), tir.int64(16)):
+            with tir.block("T_add"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(tir.int64(16), i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, ax1])
+                tir.writes(T_add_1[ax0, ax1])
+                T_add_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] + rxplaceholder_3[ax0, ax1]
+
+    @tir.prim_func
+    def add4(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), 4), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(1), 4), "float32"],
+        T_add_1: tir.Buffer[(tir.int64(1), 4), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "add4", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_add"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, ax1])
+                tir.writes(T_add_1[ax0, ax1])
+                T_add_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] + rxplaceholder_3[ax0, ax1]
+
+    @tir.prim_func
+    def add5(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), 4), "float32"],
+        rxplaceholder_3: tir.Buffer[tir.int64(4), "float32"],
+        T_add_1: tir.Buffer[(tir.int64(1), 4), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "add5", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_add"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax1])
+                tir.writes(T_add_1[ax0, ax1])
+                T_add_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] + rxplaceholder_3[ax1]
+
+    @relax.function(metadata=metadata)
+    def lifted_func_0(
+        i_1: Tensor((), "int32"),
+        outputs_11: Object,
+        state_11: Tuple(Tensor((1, 4), "float32"), Tensor((1, 4), "float32")),
+        input_1: Tensor((7, 1, 3), "float32"),
+        cell_weight_ih: Tensor((16, 3), "float32"),
+        cell_layernorm_i_weight: Tensor((16,), "float32"),
+        cell_layernorm_i_bias: Tensor((16,), "float32"),
+        cell_weight_hh: Tensor((16, 4), "float32"),
+        cell_layernorm_h_weight: Tensor((16,), "float32"),
+        cell_layernorm_h_bias: Tensor((16,), "float32"),
+        cell_layernorm_c_weight: Tensor((4,), "float32"),
+        cell_layernorm_c_bias: Tensor((4,), "float32"),
+    ) -> Tuple(
+        Tensor(None, "int32", ndim=0),
+        Object,
+        Tuple(Tensor(None, "float32", ndim=2), Tensor(None, "float32", ndim=2)),
+        Tensor(None, "float32", ndim=3),
+    ):
+        # block 0
+        gv1 = relax.call_tir(less, (i_1, 7), (), dtype="bool")
+        if gv1:
+            # block 0
+            gv2 = relax.call_tir(add, (i_1, 1), (), dtype="int32")
+            gv3 = relax.call_tir(take, (input_1, i_1), (1, 3), dtype="float32")
+            gv4 = relax.call_tir(dense, (gv3, cell_weight_ih), (1, 16), dtype="float32")
+            gv5 = relax.call_tir(mean, (gv4,), (1, 1), dtype="float32")
+            gv6 = relax.call_tir(subtract, (gv4, gv5), (1, 16), dtype="float32")
+            gv7 = relax.call_tir(variance, (gv4, gv5), (1, 1), dtype="float32")
+            gv8 = relax.call_tir(add1, (gv7, 1e-05), (1, 1), dtype="float32")
+            gv9 = relax.call_tir(sqrt, (gv8,), (1, 1), dtype="float32")
+            gv10 = relax.call_tir(divide, (gv6, gv9), (1, 16), dtype="float32")
+            gv11 = relax.call_tir(expand_dims, (cell_layernorm_i_weight,), (1, 16), dtype="float32")
+            gv12 = relax.call_tir(multiply, (gv10, gv11), (1, 16), dtype="float32")
+            gv13 = relax.call_tir(expand_dims, (cell_layernorm_i_bias,), (1, 16), dtype="float32")
+            gv14 = relax.call_tir(add2, (gv12, gv13), (1, 16), dtype="float32")
+            gv15: Tensor((1, 4), "float32") = state_11[0]
+            gv16 = relax.call_tir(dense1, (gv15, cell_weight_hh), (1, 16), dtype="float32")
+            gv17 = relax.call_tir(mean, (gv16,), (1, 1), dtype="float32")
+            gv18 = relax.call_tir(subtract, (gv16, gv17), (1, 16), dtype="float32")
+            gv19 = relax.call_tir(variance, (gv16, gv17), (1, 1), dtype="float32")
+            gv20 = relax.call_tir(add1, (gv19, 1e-05), (1, 1), dtype="float32")
+            gv21 = relax.call_tir(sqrt, (gv20,), (1, 1), dtype="float32")
+            gv22 = relax.call_tir(divide, (gv18, gv21), (1, 16), dtype="float32")
+            gv23 = relax.call_tir(expand_dims, (cell_layernorm_h_weight,), (1, 16), dtype="float32")
+            gv24 = relax.call_tir(multiply, (gv22, gv23), (1, 16), dtype="float32")
+            gv25 = relax.call_tir(expand_dims, (cell_layernorm_h_bias,), (1, 16), dtype="float32")
+            gv26 = relax.call_tir(add2, (gv24, gv25), (1, 16), dtype="float32")
+            gv27 = relax.call_tir(add3, (gv14, gv26), (1, 16), dtype="float32")
+            gv28 = relax.call_tir(
+                split,
+                (gv27,),
+                ((1, 4), (1, 4), (1, 4), (1, 4)),
+                dtype=("float32", "float32", "float32", "float32"),
+            )
+            gv29: Tensor((1, 4), "float32") = gv28[3]
+            gv30 = relax.call_tir(sigmoid, (gv29,), (1, 4), dtype="float32")
+            gv31: Tensor((1, 4), "float32") = gv28[1]
+            gv32 = relax.call_tir(sigmoid1, (gv31,), (1, 4), dtype="float32")
+            gv33: Tensor((1, 4), "float32") = state_11[1]
+            gv34 = relax.call_tir(multiply1, (gv32, gv33), (1, 4), dtype="float32")
+            gv35: Tensor((1, 4), "float32") = gv28[0]
+            gv36 = relax.call_tir(sigmoid1, (gv35,), (1, 4), dtype="float32")
+            gv37: Tensor((1, 4), "float32") = gv28[2]
+            gv38 = relax.call_tir(tanh, (gv37,), (1, 4), dtype="float32")
+            gv39 = relax.call_tir(multiply2, (gv36, gv38), (1, 4), dtype="float32")
+            gv40 = relax.call_tir(add4, (gv34, gv39), (1, 4), dtype="float32")
+            gv41 = relax.call_tir(mean1, (gv40,), (1, 1), dtype="float32")
+            gv42 = relax.call_tir(subtract1, (gv40, gv41), (1, 4), dtype="float32")
+            gv43 = relax.call_tir(variance1, (gv40, gv41), (1, 1), dtype="float32")
+            gv44 = relax.call_tir(add1, (gv43, 1e-05), (1, 1), dtype="float32")
+            gv45 = relax.call_tir(sqrt, (gv44,), (1, 1), dtype="float32")
+            gv46 = relax.call_tir(divide1, (gv42, gv45), (1, 4), dtype="float32")
+            gv47 = relax.call_tir(
+                multiply3, (gv46, cell_layernorm_c_weight), (1, 4), dtype="float32"
+            )
+            gv48 = relax.call_tir(add5, (gv47, cell_layernorm_c_bias), (1, 4), dtype="float32")
+            gv49 = relax.call_tir(tanh, (gv48,), (1, 4), dtype="float32")
+            gv50 = relax.call_tir(multiply4, (gv30, gv49), (1, 4), dtype="float32")
+            gv51: Object = relax.call_packed("vm.builtin.empty_list")
+            gv52: Object = relax.call_packed("vm.builtin.tensor_list_write", gv51, 0, gv50)
+            gv53: Object = relax.call_packed("vm.builtin.concat_lists", outputs_11, gv52)
+            gv54: Tuple(Tensor((1, 4), "float32"), Tensor((1, 4), "float32")) = (gv50, gv48)
+            gv55 = lifted_func_0(
+                gv2,
+                gv53,
+                gv54,
+                input_1,
+                cell_weight_ih,
+                cell_layernorm_i_weight,
+                cell_layernorm_i_bias,
+                cell_weight_hh,
+                cell_layernorm_h_weight,
+                cell_layernorm_h_bias,
+                cell_layernorm_c_weight,
+                cell_layernorm_c_bias,
+            )
+            gv57 = gv55
+        else:
+            # block 0
+            gv56: Tuple(Tensor(None, "int32", ndim=0), Tensor(None, "float32", ndim=3)) = (
+                i_1,
+                outputs_11,
+                state_11,
+                input_1,
+            )
+            gv57 = gv56
+        return gv57
+
+    @tir.prim_func
+    def multiply4(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), tir.int64(4)), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(1), 4), "float32"],
+        T_multiply_1: tir.Buffer[(tir.int64(1), tir.int64(4)), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "multiply4", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), tir.int64(4)):
+            with tir.block("T_multiply"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(tir.int64(4), i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, ax1])
+                tir.writes(T_multiply_1[ax0, ax1])
+                T_multiply_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] * rxplaceholder_3[ax0, ax1]
+
+    @tir.prim_func
+    def split(
+        rxplaceholder_1: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+        T_split_4: tir.Buffer[(tir.int64(1), 4), "float32"],
+        T_split_5: tir.Buffer[(tir.int64(1), 4), "float32"],
+        T_split_6: tir.Buffer[(tir.int64(1), 4), "float32"],
+        T_split_7: tir.Buffer[(tir.int64(1), tir.int64(4)), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "split", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_split"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_1[ax0, ax1])
+                tir.writes(T_split_4[ax0, ax1])
+                T_split_4[ax0, ax1] = rxplaceholder_1[ax0, ax1]
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_split_1"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_1[ax0, ax1 + 4])
+                tir.writes(T_split_5[ax0, ax1])
+                T_split_5[ax0, ax1] = rxplaceholder_1[ax0, ax1 + 4]
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_split_2"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_1[ax0, ax1 + 8])
+                tir.writes(T_split_6[ax0, ax1])
+                T_split_6[ax0, ax1] = rxplaceholder_1[ax0, ax1 + 8]
+        for i0, i1 in tir.grid(tir.int64(1), tir.int64(4)):
+            with tir.block("T_split_3"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(tir.int64(4), i1)
+                tir.reads(rxplaceholder_1[ax0, ax1 + tir.int64(12)])
+                tir.writes(T_split_7[ax0, ax1])
+                T_split_7[ax0, ax1] = rxplaceholder_1[ax0, ax1 + tir.int64(12)]
+
+    @tir.prim_func
+    def multiply1(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), 4), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(1), tir.int64(4)), "float32"],
+        T_multiply_1: tir.Buffer[(tir.int64(1), 4), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "multiply1", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_multiply"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, ax1])
+                tir.writes(T_multiply_1[ax0, ax1])
+                T_multiply_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] * rxplaceholder_3[ax0, ax1]
+
+    @tir.prim_func
+    def multiply(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+        rxplaceholder_3: tir.Buffer[(1, tir.int64(16)), "float32"],
+        T_multiply_1: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "multiply", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), tir.int64(16)):
+            with tir.block("T_multiply"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(tir.int64(16), i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, ax1])
+                tir.writes(T_multiply_1[ax0, ax1])
+                T_multiply_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] * rxplaceholder_3[ax0, ax1]
+
+    @tir.prim_func
+    def multiply2(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), 4), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(1), 4), "float32"],
+        T_multiply_1: tir.Buffer[(tir.int64(1), 4), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "multiply2", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_multiply"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, ax1])
+                tir.writes(T_multiply_1[ax0, ax1])
+                T_multiply_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] * rxplaceholder_3[ax0, ax1]
+
+    @tir.prim_func
+    def variance(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(1), 1), "float32"],
+        T_divide_1: tir.Buffer[(tir.int64(1), 1), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "variance", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        T_subtract_1 = tir.alloc_buffer([tir.int64(1), tir.int64(16)], dtype="float32")
+        T_multiply_1 = tir.alloc_buffer([tir.int64(1), tir.int64(16)], dtype="float32")
+        T_multiply_red_1 = tir.alloc_buffer([tir.int64(1), 1], dtype="float32")
+        for i0, i1 in tir.grid(tir.int64(1), tir.int64(16)):
+            with tir.block("T_subtract"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(tir.int64(16), i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, tir.int64(0)])
+                tir.writes(T_subtract_1[ax0, ax1])
+                T_subtract_1[ax0, ax1] = (
+                    rxplaceholder_2[ax0, ax1] - rxplaceholder_3[ax0, tir.int64(0)]
+                )
+        for i0, i1 in tir.grid(tir.int64(1), tir.int64(16)):
+            with tir.block("T_multiply"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(tir.int64(16), i1)
+                tir.reads(T_subtract_1[ax0, ax1])
+                tir.writes(T_multiply_1[ax0, ax1])
+                T_multiply_1[ax0, ax1] = T_subtract_1[ax0, ax1] * T_subtract_1[ax0, ax1]
+        for i0, i1, i2 in tir.grid(tir.int64(1), 1, tir.int64(16)):
+            with tir.block("T_multiply_red"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(1, i1)
+                k1 = tir.axis.reduce(tir.int64(16), i2)
+                tir.reads(T_multiply_1[ax0, k1])
+                tir.writes(T_multiply_red_1[ax0, ax1])
+                with tir.init():
+                    T_multiply_red_1[ax0, ax1] = tir.float32(0)
+                T_multiply_red_1[ax0, ax1] = T_multiply_red_1[ax0, ax1] + T_multiply_1[ax0, k1]
+        for i0, i1 in tir.grid(tir.int64(1), 1):
+            with tir.block("T_divide"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(1, i1)
+                tir.reads(T_multiply_red_1[ax0, ax1])
+                tir.writes(T_divide_1[ax0, ax1])
+                T_divide_1[ax0, ax1] = T_multiply_red_1[ax0, ax1] * tir.float32(0.0625)
+
+    @tir.prim_func
+    def add3(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+        T_add_1: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "add3", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), tir.int64(16)):
+            with tir.block("T_add"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(tir.int64(16), i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, ax1])
+                tir.writes(T_add_1[ax0, ax1])
+                T_add_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] + rxplaceholder_3[ax0, ax1]
+
+    @tir.prim_func
+    def multiply3(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), 4), "float32"],
+        rxplaceholder_3: tir.Buffer[tir.int64(4), "float32"],
+        T_multiply_1: tir.Buffer[(tir.int64(1), 4), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "multiply3", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_multiply"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax1])
+                tir.writes(T_multiply_1[ax0, ax1])
+                T_multiply_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] * rxplaceholder_3[ax1]
+
+    @tir.prim_func
+    def tanh(
+        rxplaceholder_1: tir.Buffer[(tir.int64(1), 4), "float32"],
+        T_tanh_1: tir.Buffer[(tir.int64(1), 4), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "tanh", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_tanh"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_1[ax0, ax1])
+                tir.writes(T_tanh_1[ax0, ax1])
+                T_tanh_1[ax0, ax1] = tir.tanh(rxplaceholder_1[ax0, ax1], dtype="float32")
+
+    @relax.function(metadata=metadata)
+    def main(
+        states: Tuple(Tensor((1, 4), "float32"), Tensor((1, 4), "float32")),
+        input: Tensor((7, 1, 3), "float32"),
+        cell_weight_ih1: Tensor((16, 3), "float32"),
+        cell_layernorm_i_weight1: Tensor((16,), "float32"),
+        cell_layernorm_i_bias1: Tensor((16,), "float32"),
+        cell_weight_hh1: Tensor((16, 4), "float32"),
+        cell_layernorm_h_weight1: Tensor((16,), "float32"),
+        cell_layernorm_h_bias1: Tensor((16,), "float32"),
+        cell_layernorm_c_weight1: Tensor((4,), "float32"),
+        cell_layernorm_c_bias1: Tensor((4,), "float32"),
+        eta_expand_param: Tensor((1, 4), "float32"),
+    ) -> Tuple(Object, Tuple(Tensor(None, "float32", ndim=2), Tensor(None, "float32", ndim=2))):
+        # block 0
+        gv: Object = relax.call_packed("vm.builtin.empty_list")
+        local_func: Object = relax.make_closure(
+            lifted_func_0,
+            (
+                cell_weight_ih1,
+                cell_layernorm_i_weight1,
+                cell_layernorm_i_bias1,
+                cell_weight_hh1,
+                cell_layernorm_h_weight1,
+                cell_layernorm_h_bias1,
+                cell_layernorm_c_weight1,
+                cell_layernorm_c_bias1,
+            ),
+        )
+        gv58: Object = relax.call_packed("vm.builtin.empty_list")
+        gv59: Tuple(
+            Tensor(None, "int32", ndim=0), Tensor(None, "float32", ndim=3)
+        ) = relax.invoke_closure(
+            local_func,
+            (0, gv58, states, input),
+            type_args=(
+                Tuple(
+                    Tensor(None, "int32", ndim=0),
+                    Object,
+                    Tuple(Tensor(None, "float32", ndim=2), Tensor(None, "float32", ndim=2)),
+                    Tensor(None, "float32", ndim=3),
+                )
+            ),
+        )
+        gv60: Object = gv59[1]
+        gv61: Object = relax.call_packed("vm.builtin.empty_list")
+        gv62: Object = relax.call_packed("vm.builtin.tensor_list_write", gv61, 0, gv60)
+        gv63: Object = relax.call_packed("vm.builtin.tensor_list_stack", gv62)
+        gv64: Object = relax.call_packed("vm.builtin.tensor_list_read", gv63, 0)
+        gv65: Tuple(Tensor(None, "float32", ndim=2), Tensor(None, "float32", ndim=2)) = gv59[2]
+        gv66: Tuple() = (gv64, gv65)
+        return gv66
+
+    @tir.prim_func
+    def subtract1(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), 4), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(1), 1), "float32"],
+        T_subtract_1: tir.Buffer[(tir.int64(1), 4), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "subtract1", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_subtract"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, 0])
+                tir.writes(T_subtract_1[ax0, ax1])
+                T_subtract_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] - rxplaceholder_3[ax0, 0]
+
+    @tir.prim_func
+    def divide1(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), 4), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(1), 1), "float32"],
+        T_divide_1: tir.Buffer[(tir.int64(1), 4), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "divide1", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_divide"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, 0])
+                tir.writes(T_divide_1[ax0, ax1])
+                T_divide_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] / rxplaceholder_3[ax0, 0]
+
+    @tir.prim_func
+    def sqrt(
+        rxplaceholder_1: tir.Buffer[(tir.int64(1), 1), "float32"],
+        T_sqrt_1: tir.Buffer[(tir.int64(1), 1), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "sqrt", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), 1):
+            with tir.block("T_sqrt"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(1, i1)
+                tir.reads(rxplaceholder_1[ax0, ax1])
+                tir.writes(T_sqrt_1[ax0, ax1])
+                T_sqrt_1[ax0, ax1] = tir.sqrt(rxplaceholder_1[ax0, ax1], dtype="float32")
+
+    @tir.prim_func
+    def add(
+        rxplaceholder_2: tir.Buffer[(), "int32"],
+        rxplaceholder_3: tir.Buffer[(), "int32"],
+        T_add_1: tir.Buffer[(), "int32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "add", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        with tir.block("T_add"):
+            vi = tir.axis.spatial(1, 0)
+            tir.reads(rxplaceholder_2[()], rxplaceholder_3[()])
+            tir.writes(T_add_1[()])
+            T_add_1[()] = rxplaceholder_2[()] + rxplaceholder_3[()]
+
+    @tir.prim_func
+    def less(
+        rxplaceholder_2: tir.Buffer[(), "int32"],
+        rxplaceholder_3: tir.Buffer[(), "int32"],
+        T_less_1: tir.Buffer[(), "bool"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "less", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        with tir.block("T_less"):
+            vi = tir.axis.spatial(1, 0)
+            tir.reads(rxplaceholder_2[()], rxplaceholder_3[()])
+            tir.writes(T_less_1[()])
+            T_less_1[()] = rxplaceholder_2[()] < rxplaceholder_3[()]
+
+    @tir.prim_func
+    def variance1(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), 4), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(1), 1), "float32"],
+        T_divide_1: tir.Buffer[(tir.int64(1), 1), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "variance1", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        T_subtract_1 = tir.alloc_buffer([tir.int64(1), 4], dtype="float32")
+        T_multiply_1 = tir.alloc_buffer([tir.int64(1), 4], dtype="float32")
+        T_multiply_red_1 = tir.alloc_buffer([tir.int64(1), 1], dtype="float32")
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_subtract"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, 0])
+                tir.writes(T_subtract_1[ax0, ax1])
+                T_subtract_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] - rxplaceholder_3[ax0, 0]
+        for i0, i1 in tir.grid(tir.int64(1), 4):
+            with tir.block("T_multiply"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(4, i1)
+                tir.reads(T_subtract_1[ax0, ax1])
+                tir.writes(T_multiply_1[ax0, ax1])
+                T_multiply_1[ax0, ax1] = T_subtract_1[ax0, ax1] * T_subtract_1[ax0, ax1]
+        for i0, i1, i2 in tir.grid(tir.int64(1), 1, 4):
+            with tir.block("T_multiply_red"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1, k1 = tir.axis.remap("SR", [i1, i2])
+                tir.reads(T_multiply_1[ax0, k1])
+                tir.writes(T_multiply_red_1[ax0, ax1])
+                with tir.init():
+                    T_multiply_red_1[ax0, ax1] = tir.float32(0)
+                T_multiply_red_1[ax0, ax1] = T_multiply_red_1[ax0, ax1] + T_multiply_1[ax0, k1]
+        for i0, i1 in tir.grid(tir.int64(1), 1):
+            with tir.block("T_divide"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(1, i1)
+                tir.reads(T_multiply_red_1[ax0, ax1])
+                tir.writes(T_divide_1[ax0, ax1])
+                T_divide_1[ax0, ax1] = T_multiply_red_1[ax0, ax1] * tir.float32(0.25)
+
+    @tir.prim_func
+    def expand_dims(
+        rxplaceholder_1: tir.Buffer[tir.int64(16), "float32"],
+        T_expand_dims_1: tir.Buffer[(1, tir.int64(16)), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "expand_dims", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(1, tir.int64(16)):
+            with tir.block("T_expand_dims"):
+                ax0 = tir.axis.spatial(1, i0)
+                ax1 = tir.axis.spatial(tir.int64(16), i1)
+                tir.reads(rxplaceholder_1[ax1])
+                tir.writes(T_expand_dims_1[ax0, ax1])
+                T_expand_dims_1[ax0, ax1] = rxplaceholder_1[ax1]
+
+    @tir.prim_func
+    def take(
+        rxplaceholder_2: tir.Buffer[(tir.int64(7), tir.int64(1), tir.int64(3)), "float32"],
+        rxplaceholder_3: tir.Buffer[(), "int32"],
+        T_take_1: tir.Buffer[(tir.int64(1), tir.int64(3)), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "take", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), tir.int64(3)):
+            with tir.block("T_take"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(tir.int64(3), i1)
+                tir.reads(
+                    rxplaceholder_2[
+                        tir.truncmod(
+                            tir.truncmod(tir.cast(rxplaceholder_3[()], "int64"), tir.int64(7))
+                            + tir.int64(7),
+                            tir.int64(7),
+                        ),
+                        ax0,
+                        ax1,
+                    ],
+                    rxplaceholder_3[()],
+                )
+                tir.writes(T_take_1[ax0, ax1])
+                T_take_1[ax0, ax1] = rxplaceholder_2[
+                    tir.truncmod(
+                        tir.truncmod(tir.cast(rxplaceholder_3[()], "int64"), tir.int64(7))
+                        + tir.int64(7),
+                        tir.int64(7),
+                    ),
+                    ax0,
+                    ax1,
+                ]
+
+    @tir.prim_func
+    def divide(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(1), 1), "float32"],
+        T_divide_1: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "divide", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), tir.int64(16)):
+            with tir.block("T_divide"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(tir.int64(16), i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[ax0, tir.int64(0)])
+                tir.writes(T_divide_1[ax0, ax1])
+                T_divide_1[ax0, ax1] = (
+                    rxplaceholder_2[ax0, ax1] / rxplaceholder_3[ax0, tir.int64(0)]
+                )
+
+    @tir.prim_func
+    def mean1(
+        rxplaceholder_1: tir.Buffer[(tir.int64(1), 4), "float32"],
+        T_divide_1: tir.Buffer[(tir.int64(1), 1), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "mean1", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        rxplaceholder_red_1 = tir.alloc_buffer([tir.int64(1), 1], dtype="float32")
+        for i0, i1, i2 in tir.grid(tir.int64(1), 1, 4):
+            with tir.block("rxplaceholder_red"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1, k1 = tir.axis.remap("SR", [i1, i2])
+                tir.reads(rxplaceholder_1[ax0, k1])
+                tir.writes(rxplaceholder_red_1[ax0, ax1])
+                with tir.init():
+                    rxplaceholder_red_1[ax0, ax1] = tir.float32(0)
+                rxplaceholder_red_1[ax0, ax1] = (
+                    rxplaceholder_red_1[ax0, ax1] + rxplaceholder_1[ax0, k1]
+                )
+        for i0, i1 in tir.grid(tir.int64(1), 1):
+            with tir.block("T_divide"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(1, i1)
+                tir.reads(rxplaceholder_red_1[ax0, ax1])
+                tir.writes(T_divide_1[ax0, ax1])
+                T_divide_1[ax0, ax1] = rxplaceholder_red_1[ax0, ax1] * tir.float32(0.25)
+
+    @tir.prim_func
+    def add1(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), 1), "float32"],
+        rxplaceholder_3: tir.Buffer[(), "float32"],
+        T_add_1: tir.Buffer[(tir.int64(1), 1), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr({"global_symbol": "add1", "tir.noalias": True})
+        # body
+        # with tir.block("root")
+        for i0, i1 in tir.grid(tir.int64(1), 1):
+            with tir.block("T_add"):
+                ax0 = tir.axis.spatial(tir.int64(1), i0)
+                ax1 = tir.axis.spatial(1, i1)
+                tir.reads(rxplaceholder_2[ax0, ax1], rxplaceholder_3[()])
+                tir.writes(T_add_1[ax0, ax1])
+                T_add_1[ax0, ax1] = rxplaceholder_2[ax0, ax1] + rxplaceholder_3[()]
+
+    @tir.prim_func
+    def dense1(
+        rxplaceholder_2: tir.Buffer[(tir.int64(1), tir.int64(4)), "float32"],
+        rxplaceholder_3: tir.Buffer[(tir.int64(16), tir.int64(4)), "float32"],
+        T_matmul_NT_1: tir.Buffer[(tir.int64(1), tir.int64(16)), "float32"],
+    ) -> None:
+        # function attr dict
+        tir.func_attr(
+            {"global_symbol": "dense1", "tir.noalias": True, "layout_free_placeholders": [1]}
+        )
+        # body
+        # with tir.block("root")
+        for i0, i1, i2 in tir.grid(tir.int64(1), tir.int64(16), tir.int64(4)):
+            with tir.block("T_matmul_NT"):
+                i = tir.axis.spatial(tir.int64(1), i0)
+                j = tir.axis.spatial(tir.int64(16), i1)
+                k = tir.axis.reduce(tir.int64(4), i2)
+                tir.reads(rxplaceholder_2[i, k], rxplaceholder_3[j, k])
+                tir.writes(T_matmul_NT_1[i, j])
+                with tir.init():
+                    T_matmul_NT_1[i, j] = tir.float32(0)
+                T_matmul_NT_1[i, j] = (
+                    T_matmul_NT_1[i, j] + rxplaceholder_2[i, k] * rxplaceholder_3[j, k]
+                )

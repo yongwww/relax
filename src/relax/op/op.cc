@@ -99,6 +99,7 @@ Expr MakeCallTIR(Expr func, Tuple args, Expr output_shape, Type output_type,
 
 TVM_REGISTER_GLOBAL("relax.op.call_tir").set_body_typed(MakeCallTIR);
 
+
 // make_closure
 
 RELAY_REGISTER_OP("relax.make_closure")
@@ -128,6 +129,19 @@ Expr InvokeClosure(Expr closure, Tuple args) {
 }
 
 TVM_REGISTER_GLOBAL("relax.op.invoke_closure").set_body_typed(InvokeClosure);
+
+// empty_list
+
+RELAY_REGISTER_OP("relax.empty_list")
+    .set_num_inputs(0)
+    .set_attr<FInferType>("FInferType", ReturnVoidType); // todo(yongwww)
+
+Expr MakeEmptyList(Expr func, Tuple args) {
+  static const Op& op = Op::Get("relax.empty_list");
+  return Call(op, {}, {}, {});
+}
+
+TVM_REGISTER_GLOBAL("relax.op.empty_list").set_body_typed(MakeEmptyList);
 
 // shape_of
 

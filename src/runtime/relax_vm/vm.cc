@@ -265,7 +265,10 @@ void VirtualMachine::RunLoop() {
         break;
       }
       case Opcode::If: {
-        int64_t cond_val = ReadRegister(curr_frame, instr.cond);
+        runtime::NDArray array = ReadRegister(curr_frame, instr.cond);
+        // todo(yongwww): add int64_t VirtualMachine::LoadScalarInt(Index r)
+        int64_t cond_val = reinterpret_cast<int64_t*>(array->data)[0];
+        // int64_t cond_val = ReadRegister(curr_frame, instr.cond);
         if (cond_val != 0) {
           pc_++;
         } else {

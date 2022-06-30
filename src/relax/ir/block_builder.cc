@@ -86,6 +86,10 @@ class BlockBuilderNode::ExprNormalizer : public ExprFunctor<Expr(const Expr&)> {
     if (!tuple->checked_type_.defined()) {
       Array<Type> tuple_type;
       for (Expr field : tuple->fields) {
+        if (field.as<relax::RuntimeDepShapeNode>()) {
+          tuple_type.push_back(ObjectType(Span()));
+          continue;
+        }
         ICHECK(field->checked_type_.defined())
             << "The checked_type_ of the field " << field << " of Tuple has not propagated.";
         tuple_type.push_back(field->checked_type_);
@@ -241,6 +245,7 @@ class BlockBuilderNode::ExprNormalizer : public ExprFunctor<Expr(const Expr&)> {
     node = TupleGetItem(new_tuple, op->index);
 
     // only do shape/type inference if the TupleGetItem does not have shape/type
+    // TODO(yongwww): remove this check, is there a case that the shape_ and checked_type is not nullptr?
     if (node->shape_ && node->checked_type_.defined()) {
       return node;
     }
@@ -763,6 +768,10 @@ TVM_REGISTER_GLOBAL("relax.BlockBuilderNormalize")
 
 TVM_REGISTER_GLOBAL("relax.BlockBuilderEmit").set_body_typed([](BlockBuilder builder, Expr expr) {
   return builder->Emit(expr);
+});
+
+TVM_REGISTER_GLOBAL("relax.BlockBuilderEmitVarBinding").set_body_typed([](BlockBuilder builder, VarBinding varbinding) {
+  return builder->Emit(varbinding);
 });
 
 TVM_REGISTER_GLOBAL("relax.BlockBuilderEmitMatchShape")

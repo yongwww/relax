@@ -88,6 +88,22 @@ struct UniqueAttrs : public tvm::AttrsNode<UniqueAttrs> {
   }
 };  // struct UniqueAttrs
 
+/*! \brief Attributes used in tensor_list_write operator */
+struct TensorListWriteAttrs : public tvm::AttrsNode<TensorListWriteAttrs> {
+  int index;
+  TVM_DECLARE_ATTRS(TensorListWriteAttrs, "relax.attrs.TensorListWriteAttrs") {
+    TVM_ATTR_FIELD(index).describe("The index to add tensor.").set_default(0);
+  }
+};  // struct TensorListWriteAttrs
+
+/*! \brief Attributes used in tensor_list_read operator */
+struct TensorListReadAttrs : public tvm::AttrsNode<TensorListReadAttrs> {
+  int index;
+  TVM_DECLARE_ATTRS(TensorListReadAttrs, "relax.attrs.TensorListReadAttrs") {
+    TVM_ATTR_FIELD(index).describe("The index to read tensor.").set_default(0);
+  }
+};  // struct TensorListReadAttrs
+
 }  // namespace relax
 }  // namespace tvm
 #endif  // TVM_RELAX_OP_ATTR_TYPES_H_

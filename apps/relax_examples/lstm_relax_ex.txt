@@ -1,0 +1,173 @@
+@lifted_func_0:
+  call  vm.builtin.alloc_storage in: %vm, c[0], i0, c[1] dst: %12
+  call  vm.builtin.alloc_tensor in: %12, i0, c[2], c[3] dst: %13
+  call  less             in: %0, c[4], %13 dst: %14
+  If    %13, 150
+  call  vm.builtin.alloc_storage in: %vm, c[5], i0, c[6] dst: %15
+  call  vm.builtin.alloc_tensor in: %15, i0, c[7], c[8] dst: %16
+  call  add              in: %0, c[9], %16 dst: %17
+  call  vm.builtin.alloc_storage in: %vm, c[10], i0, c[11] dst: %18
+  call  vm.builtin.alloc_tensor in: %18, i0, c[12], c[13] dst: %19
+  call  take             in: %3, %0, %19  dst: %20
+  call  vm.builtin.alloc_storage in: %vm, c[14], i0, c[15] dst: %21
+  call  vm.builtin.alloc_tensor in: %21, i0, c[16], c[17] dst: %22
+  call  dense            in: %19, %4, %22 dst: %23
+  call  vm.builtin.alloc_storage in: %vm, c[18], i0, c[19] dst: %24
+  call  vm.builtin.alloc_tensor in: %24, i0, c[20], c[21] dst: %25
+  call  mean             in: %22, %25     dst: %26
+  call  vm.builtin.alloc_storage in: %vm, c[22], i0, c[23] dst: %27
+  call  vm.builtin.alloc_tensor in: %27, i0, c[24], c[25] dst: %28
+  call  subtract         in: %22, %25, %28 dst: %29
+  call  vm.builtin.alloc_storage in: %vm, c[26], i0, c[27] dst: %30
+  call  vm.builtin.alloc_tensor in: %30, i0, c[28], c[29] dst: %31
+  call  variance         in: %22, %25, %31 dst: %32
+  call  vm.builtin.alloc_storage in: %vm, c[30], i0, c[31] dst: %33
+  call  vm.builtin.alloc_tensor in: %33, i0, c[32], c[33] dst: %34
+  call  add1             in: %31, c[34], %34 dst: %35
+  call  vm.builtin.alloc_storage in: %vm, c[35], i0, c[36] dst: %36
+  call  vm.builtin.alloc_tensor in: %36, i0, c[37], c[38] dst: %37
+  call  sqrt             in: %34, %37     dst: %38
+  call  vm.builtin.alloc_storage in: %vm, c[39], i0, c[40] dst: %39
+  call  vm.builtin.alloc_tensor in: %39, i0, c[41], c[42] dst: %40
+  call  divide           in: %28, %37, %40 dst: %41
+  call  vm.builtin.alloc_storage in: %vm, c[43], i0, c[44] dst: %42
+  call  vm.builtin.alloc_tensor in: %42, i0, c[45], c[46] dst: %43
+  call  expand_dims      in: %5, %43      dst: %44
+  call  vm.builtin.alloc_storage in: %vm, c[47], i0, c[48] dst: %45
+  call  vm.builtin.alloc_tensor in: %45, i0, c[49], c[50] dst: %46
+  call  multiply         in: %40, %43, %46 dst: %47
+  call  vm.builtin.alloc_storage in: %vm, c[51], i0, c[52] dst: %48
+  call  vm.builtin.alloc_tensor in: %48, i0, c[53], c[54] dst: %49
+  call  expand_dims      in: %6, %49      dst: %50
+  call  vm.builtin.alloc_storage in: %vm, c[55], i0, c[56] dst: %51
+  call  vm.builtin.alloc_tensor in: %51, i0, c[57], c[58] dst: %52
+  call  add2             in: %46, %49, %52 dst: %53
+  call  vm.runtime.TupleGetItem in: %2, c[59]    dst: %54
+  call  vm.builtin.alloc_storage in: %vm, c[60], i0, c[61] dst: %55
+  call  vm.builtin.alloc_tensor in: %55, i0, c[62], c[63] dst: %56
+  call  dense1           in: %54, %7, %56 dst: %57
+  call  vm.builtin.alloc_storage in: %vm, c[64], i0, c[65] dst: %58
+  call  vm.builtin.alloc_tensor in: %58, i0, c[66], c[67] dst: %59
+  call  mean             in: %56, %59     dst: %60
+  call  vm.builtin.alloc_storage in: %vm, c[68], i0, c[69] dst: %61
+  call  vm.builtin.alloc_tensor in: %61, i0, c[70], c[71] dst: %62
+  call  subtract         in: %56, %59, %62 dst: %63
+  call  vm.builtin.alloc_storage in: %vm, c[72], i0, c[73] dst: %64
+  call  vm.builtin.alloc_tensor in: %64, i0, c[74], c[75] dst: %65
+  call  variance         in: %56, %59, %65 dst: %66
+  call  vm.builtin.alloc_storage in: %vm, c[76], i0, c[77] dst: %67
+  call  vm.builtin.alloc_tensor in: %67, i0, c[78], c[79] dst: %68
+  call  add1             in: %65, c[80], %68 dst: %69
+  call  vm.builtin.alloc_storage in: %vm, c[81], i0, c[82] dst: %70
+  call  vm.builtin.alloc_tensor in: %70, i0, c[83], c[84] dst: %71
+  call  sqrt             in: %68, %71     dst: %72
+  call  vm.builtin.alloc_storage in: %vm, c[85], i0, c[86] dst: %73
+  call  vm.builtin.alloc_tensor in: %73, i0, c[87], c[88] dst: %74
+  call  divide           in: %62, %71, %74 dst: %75
+  call  vm.builtin.alloc_storage in: %vm, c[89], i0, c[90] dst: %76
+  call  vm.builtin.alloc_tensor in: %76, i0, c[91], c[92] dst: %77
+  call  expand_dims      in: %8, %77      dst: %78
+  call  vm.builtin.alloc_storage in: %vm, c[93], i0, c[94] dst: %79
+  call  vm.builtin.alloc_tensor in: %79, i0, c[95], c[96] dst: %80
+  call  multiply         in: %74, %77, %80 dst: %81
+  call  vm.builtin.alloc_storage in: %vm, c[97], i0, c[98] dst: %82
+  call  vm.builtin.alloc_tensor in: %82, i0, c[99], c[100] dst: %83
+  call  expand_dims      in: %9, %83      dst: %84
+  call  vm.builtin.alloc_storage in: %vm, c[101], i0, c[102] dst: %85
+  call  vm.builtin.alloc_tensor in: %85, i0, c[103], c[104] dst: %86
+  call  add2             in: %80, %83, %86 dst: %87
+  call  vm.builtin.alloc_storage in: %vm, c[105], i0, c[106] dst: %88
+  call  vm.builtin.alloc_tensor in: %88, i0, c[107], c[108] dst: %89
+  call  add3             in: %52, %86, %89 dst: %90
+  call  vm.builtin.alloc_storage in: %vm, c[109], i0, c[110] dst: %91
+  call  vm.builtin.alloc_tensor in: %91, i0, c[111], c[112] dst: %92
+  call  vm.builtin.alloc_storage in: %vm, c[113], i0, c[114] dst: %93
+  call  vm.builtin.alloc_tensor in: %93, i0, c[115], c[116] dst: %94
+  call  vm.builtin.alloc_storage in: %vm, c[117], i0, c[118] dst: %95
+  call  vm.builtin.alloc_tensor in: %95, i0, c[119], c[120] dst: %96
+  call  vm.builtin.alloc_storage in: %vm, c[121], i0, c[122] dst: %97
+  call  vm.builtin.alloc_tensor in: %97, i0, c[123], c[124] dst: %98
+  call  split            in: %89, %92, %94, %96, %98 dst: %99
+  call  runtime.Tuple    in: %92, %94, %96, %98 dst: %100
+  call  vm.runtime.TupleGetItem in: %100, c[125] dst: %101
+  call  vm.builtin.alloc_storage in: %vm, c[126], i0, c[127] dst: %102
+  call  vm.builtin.alloc_tensor in: %102, i0, c[128], c[129] dst: %103
+  call  sigmoid          in: %101, %103   dst: %104
+  call  vm.runtime.TupleGetItem in: %100, c[130] dst: %105
+  call  vm.builtin.alloc_storage in: %vm, c[131], i0, c[132] dst: %106
+  call  vm.builtin.alloc_tensor in: %106, i0, c[133], c[134] dst: %107
+  call  sigmoid1         in: %105, %107   dst: %108
+  call  vm.runtime.TupleGetItem in: %2, c[135]   dst: %109
+  call  vm.builtin.alloc_storage in: %vm, c[136], i0, c[137] dst: %110
+  call  vm.builtin.alloc_tensor in: %110, i0, c[138], c[139] dst: %111
+  call  multiply1        in: %107, %109, %111 dst: %112
+  call  vm.runtime.TupleGetItem in: %100, c[140] dst: %113
+  call  vm.builtin.alloc_storage in: %vm, c[141], i0, c[142] dst: %114
+  call  vm.builtin.alloc_tensor in: %114, i0, c[143], c[144] dst: %115
+  call  sigmoid1         in: %113, %115   dst: %116
+  call  vm.runtime.TupleGetItem in: %100, c[145] dst: %117
+  call  vm.builtin.alloc_storage in: %vm, c[146], i0, c[147] dst: %118
+  call  vm.builtin.alloc_tensor in: %118, i0, c[148], c[149] dst: %119
+  call  tanh             in: %117, %119   dst: %120
+  call  vm.builtin.alloc_storage in: %vm, c[150], i0, c[151] dst: %121
+  call  vm.builtin.alloc_tensor in: %121, i0, c[152], c[153] dst: %122
+  call  multiply2        in: %115, %119, %122 dst: %123
+  call  vm.builtin.alloc_storage in: %vm, c[154], i0, c[155] dst: %124
+  call  vm.builtin.alloc_tensor in: %124, i0, c[156], c[157] dst: %125
+  call  add4             in: %111, %122, %125 dst: %126
+  call  vm.builtin.alloc_storage in: %vm, c[158], i0, c[159] dst: %127
+  call  vm.builtin.alloc_tensor in: %127, i0, c[160], c[161] dst: %128
+  call  mean1            in: %125, %128   dst: %129
+  call  vm.builtin.alloc_storage in: %vm, c[162], i0, c[163] dst: %130
+  call  vm.builtin.alloc_tensor in: %130, i0, c[164], c[165] dst: %131
+  call  subtract1        in: %125, %128, %131 dst: %132
+  call  vm.builtin.alloc_storage in: %vm, c[166], i0, c[167] dst: %133
+  call  vm.builtin.alloc_tensor in: %133, i0, c[168], c[169] dst: %134
+  call  variance1        in: %125, %128, %134 dst: %135
+  call  vm.builtin.alloc_storage in: %vm, c[170], i0, c[171] dst: %136
+  call  vm.builtin.alloc_tensor in: %136, i0, c[172], c[173] dst: %137
+  call  add1             in: %134, c[174], %137 dst: %138
+  call  vm.builtin.alloc_storage in: %vm, c[175], i0, c[176] dst: %139
+  call  vm.builtin.alloc_tensor in: %139, i0, c[177], c[178] dst: %140
+  call  sqrt             in: %137, %140   dst: %141
+  call  vm.builtin.alloc_storage in: %vm, c[179], i0, c[180] dst: %142
+  call  vm.builtin.alloc_tensor in: %142, i0, c[181], c[182] dst: %143
+  call  divide1          in: %131, %140, %143 dst: %144
+  call  vm.builtin.alloc_storage in: %vm, c[183], i0, c[184] dst: %145
+  call  vm.builtin.alloc_tensor in: %145, i0, c[185], c[186] dst: %146
+  call  multiply3        in: %143, %10, %146 dst: %147
+  call  vm.builtin.alloc_storage in: %vm, c[187], i0, c[188] dst: %148
+  call  vm.builtin.alloc_tensor in: %148, i0, c[189], c[190] dst: %149
+  call  add5             in: %146, %11, %149 dst: %150
+  call  vm.builtin.alloc_storage in: %vm, c[191], i0, c[192] dst: %151
+  call  vm.builtin.alloc_tensor in: %151, i0, c[193], c[194] dst: %152
+  call  tanh             in: %149, %152   dst: %153
+  call  vm.builtin.alloc_storage in: %vm, c[195], i0, c[196] dst: %154
+  call  vm.builtin.alloc_tensor in: %154, i0, c[197], c[198] dst: %155
+  call  multiply4        in: %103, %152, %155 dst: %156
+  call  vm.builtin.empty_list in:              dst: %157
+  call  vm.builtin.tensor_list_write in: %157, c[199], %155 dst: %158
+  call  vm.builtin.concat_lists in: %1, %158     dst: %159
+  call  runtime.Tuple    in: %155, %149   dst: %160
+  call  lifted_func_0    in: %16, %159, %160, %3, %4, %5, %6, %7, %8, %9, %10, %11 dst: %161
+  call  vm.builtin.copy  in: %161         dst: %162
+  goto  goto 3
+  call  runtime.Tuple    in: %0, %1, %2, %3 dst: %163
+  call  vm.builtin.copy  in: %163         dst: %162
+  ret   ret %162
+
+@main:
+  call  vm.builtin.empty_list in:              dst: %11
+  call  vm.builtin.alloc_closure in: c[200], %2, %3, %4, %5, %6, %7, %8, %9 dst: %12
+  call  vm.builtin.empty_list in:              dst: %13
+  call  vm.builtin.invoke_closure in: %vm, %12, c[201], %13, %0, %1 dst: %14
+  call  vm.runtime.TupleGetItem in: %14, c[202]  dst: %15
+  call  vm.builtin.empty_list in:              dst: %16
+  call  vm.builtin.tensor_list_write in: %16, c[203], %15 dst: %17
+  call  vm.builtin.tensor_list_stack in: %17          dst: %18
+  call  vm.builtin.tensor_list_read in: %18, c[204]  dst: %19
+  call  vm.runtime.TupleGetItem in: %14, c[205]  dst: %20
+  call  runtime.Tuple    in: %19, %20     dst: %21
+  ret   ret %21
+
+
