@@ -151,7 +151,8 @@ def from_relay(
         print("translating the {}th node with type {}".format(counter, type(node)))
 
         if counter == 14:  # %eta_expand_param
-            main_params = params
+            for param in params:
+                main_params.append(param)
         elif counter == 17:  # eta function
             params = []
         elif counter == 22:  # constant 7
@@ -163,7 +164,9 @@ def from_relay(
             bb._begin_binding_block()
         elif counter == 100:
             blocks = [bb._end_block()]
-            true_branch = relax.SeqExpr(blocks, blocks[-1].bindings[-1].var)
+            # hack: change the binding blocks to dataflow blocks
+            df_blocks = relax.DataflowBlock(blocks[0].bindings)
+            true_branch = relax.SeqExpr([df_blocks], blocks[-1].bindings[-1].var)
             bb._begin_binding_block()
 
         if isinstance(node, relay.Var):

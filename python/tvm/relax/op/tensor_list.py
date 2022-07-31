@@ -15,7 +15,8 @@
 # specific language governing permissions and limitations
 """Basic tensor operations."""
 import numpy as np
-import tensorflow as tf
+
+# import tensorflow as tf
 import tvm
 
 from . import _ffi_api
@@ -30,6 +31,7 @@ def tensor_list_stack(
     """Returns the stacked tensor.
     Uses TensorArray.stack() of TensorFlow to compute.
     """
+    return data[0]
     data = list(data)
     dtype = tf.float32  # todo (@yongwww): fix the hardcoded datatype
     # TODO(@yongwww): support for tensor with different size
@@ -58,6 +60,10 @@ def tensor_list_write(
     value: tvm.nd.array,
 ) -> List[tvm.nd.array]:
     """TensorListWrite"""
+    data = list(data)
+    data.append(value)
+    # tvm.ir.container.Array
+    return data
     data = list(data)
     dtype = tf.float32  # todo
     # Construct TensorFlow TensorArray
@@ -92,7 +98,7 @@ def tensor_list_read(
     if isinstance(data, tvm.nd.NDArray):
         return data  # todo(remove the check)
     data = list(data)
-    dtype = tf.float32  # todo
+    # dtype = tf.float32  # todo
     return data[index.numpy().item()]
     """
     # Construct TensorFlow TensorArray
@@ -115,6 +121,7 @@ def concat_lists(
     lhs_list: List[tvm.nd.array],
     rhs_list: List[tvm.nd.array],
 ) -> List[tvm.nd.array]:
+    # return rhs_list
     output = list(lhs_list)
     rhs_list = list(rhs_list)
     for data in rhs_list:

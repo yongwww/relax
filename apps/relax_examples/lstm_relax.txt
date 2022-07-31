@@ -1,0 +1,81 @@
+@relax.function
+def main(states: Tuple(Tensor((1, 4), "float32"), Tensor((1, 4), "float32")), input: Tensor((7, 1, 3), "float32"), cell_weight_ih: Tensor((16, 3), "float32"), cell_layernorm_i_weight: Tensor((16,), "float32"), cell_layernorm_i_bias: Tensor((16,), "float32"), cell_weight_hh: Tensor((16, 4), "float32"), cell_layernorm_h_weight: Tensor((16,), "float32"), cell_layernorm_h_bias: Tensor((16,), "float32"), cell_layernorm_c_weight: Tensor((4,), "float32"), cell_layernorm_c_bias: Tensor((4,), "float32")) -> Tuple(Object, Tuple(Tensor(None, "float32", ndim = 2), Tensor(None, "float32", ndim = 2))):
+    # block 0
+    gv: Object = relax.call_packed("vm.builtin.empty_list")
+    @relax.function
+    def local_func(i_1: Tensor((), "int32"), outputs_11: Object, state_11: Tuple(Tensor((1, 4), "float32"), Tensor((1, 4), "float32")), input_1: Tensor((7, 1, 3), "float32")) -> Tuple(Tensor(None, "int32", ndim = 0), Object, Tuple(Tensor(None, "float32", ndim = 2), Tensor(None, "float32", ndim = 2)), Tensor(None, "float32", ndim = 3)):
+        # block 0
+        gv1 = relax.call_tir(less, (i_1, 7), (), dtype="bool")
+        if gv1:
+            # block 0
+            gv2 = relax.call_tir(add, (i_1, 1), (), dtype="int32")
+            gv3 = relax.call_tir(take, (input_1, i_1), (1, 3), dtype="float32")
+            gv4 = relax.call_tir(dense, (gv3, cell_weight_ih), (1, 16), dtype="float32")
+            gv5 = relax.call_tir(mean, (gv4,), (1, 1), dtype="float32")
+            gv6 = relax.call_tir(subtract, (gv4, gv5), (1, 16), dtype="float32")
+            gv7 = relax.call_tir(variance, (gv4, gv5), (1, 1), dtype="float32")
+            gv8 = relax.call_tir(add1, (gv7, 1e-05), (1, 1), dtype="float32")
+            gv9 = relax.call_tir(sqrt, (gv8,), (1, 1), dtype="float32")
+            gv10 = relax.call_tir(divide, (gv6, gv9), (1, 16), dtype="float32")
+            gv11 = relax.call_tir(expand_dims, (cell_layernorm_i_weight,), (1, 16), dtype="float32")
+            gv12 = relax.call_tir(multiply, (gv10, gv11), (1, 16), dtype="float32")
+            gv13 = relax.call_tir(expand_dims, (cell_layernorm_i_bias,), (1, 16), dtype="float32")
+            gv14 = relax.call_tir(add2, (gv12, gv13), (1, 16), dtype="float32")
+            gv15: Tensor((1, 4), "float32") = state_11[0]
+            gv16 = relax.call_tir(dense1, (gv15, cell_weight_hh), (1, 16), dtype="float32")
+            gv17 = relax.call_tir(mean, (gv16,), (1, 1), dtype="float32")
+            gv18 = relax.call_tir(subtract, (gv16, gv17), (1, 16), dtype="float32")
+            gv19 = relax.call_tir(variance, (gv16, gv17), (1, 1), dtype="float32")
+            gv20 = relax.call_tir(add1, (gv19, 1e-05), (1, 1), dtype="float32")
+            gv21 = relax.call_tir(sqrt, (gv20,), (1, 1), dtype="float32")
+            gv22 = relax.call_tir(divide, (gv18, gv21), (1, 16), dtype="float32")
+            gv23 = relax.call_tir(expand_dims, (cell_layernorm_h_weight,), (1, 16), dtype="float32")
+            gv24 = relax.call_tir(multiply, (gv22, gv23), (1, 16), dtype="float32")
+            gv25 = relax.call_tir(expand_dims, (cell_layernorm_h_bias,), (1, 16), dtype="float32")
+            gv26 = relax.call_tir(add2, (gv24, gv25), (1, 16), dtype="float32")
+            gv27 = relax.call_tir(add3, (gv14, gv26), (1, 16), dtype="float32")
+            gv28 = relax.call_tir(split, (gv27,), ((1, 4), (1, 4), (1, 4), (1, 4)), dtype=("float32", "float32", "float32", "float32"))
+            gv29: Tensor((1, 4), "float32") = gv28[3]
+            gv30 = relax.call_tir(sigmoid, (gv29,), (1, 4), dtype="float32")
+            gv31: Tensor((1, 4), "float32") = gv28[1]
+            gv32 = relax.call_tir(sigmoid1, (gv31,), (1, 4), dtype="float32")
+            gv33: Tensor((1, 4), "float32") = state_11[1]
+            gv34 = relax.call_tir(multiply1, (gv32, gv33), (1, 4), dtype="float32")
+            gv35: Tensor((1, 4), "float32") = gv28[0]
+            gv36 = relax.call_tir(sigmoid1, (gv35,), (1, 4), dtype="float32")
+            gv37: Tensor((1, 4), "float32") = gv28[2]
+            gv38 = relax.call_tir(tanh, (gv37,), (1, 4), dtype="float32")
+            gv39 = relax.call_tir(multiply2, (gv36, gv38), (1, 4), dtype="float32")
+            gv40 = relax.call_tir(add4, (gv34, gv39), (1, 4), dtype="float32")
+            gv41 = relax.call_tir(mean1, (gv40,), (1, 1), dtype="float32")
+            gv42 = relax.call_tir(subtract1, (gv40, gv41), (1, 4), dtype="float32")
+            gv43 = relax.call_tir(variance1, (gv40, gv41), (1, 1), dtype="float32")
+            gv44 = relax.call_tir(add1, (gv43, 1e-05), (1, 1), dtype="float32")
+            gv45 = relax.call_tir(sqrt, (gv44,), (1, 1), dtype="float32")
+            gv46 = relax.call_tir(divide1, (gv42, gv45), (1, 4), dtype="float32")
+            gv47 = relax.call_tir(multiply3, (gv46, cell_layernorm_c_weight), (1, 4), dtype="float32")
+            gv48 = relax.call_tir(add5, (gv47, cell_layernorm_c_bias), (1, 4), dtype="float32")
+            gv49 = relax.call_tir(tanh, (gv48,), (1, 4), dtype="float32")
+            gv50 = relax.call_tir(multiply4, (gv30, gv49), (1, 4), dtype="float32")
+            gv51: Object = relax.call_packed("vm.builtin.empty_list")
+            gv52: Object = relax.call_packed("relax.run.tensor_list_write", gv51, 0, gv50)
+            gv53: Object = relax.call_packed("relax.run.concat_lists", outputs_11, gv52)
+            gv54: Tuple(Tensor((1, 4), "float32"), Tensor((1, 4), "float32")) = (gv50, gv48)
+            gv55: Tuple(Tensor((), "int32"), Tensor((7, 1, 3), "float32")) = local_func(gv2, gv53, gv54, input_1)
+            gv57 = gv55
+        else:
+            # block 0
+            gv56: Tuple(Tensor(None, "int32", ndim = 0), Tensor(None, "float32", ndim = 3)) = (i_1, outputs_11, state_11, input_1)
+            gv57 = gv56
+        return gv57
+    
+    gv58: Object = relax.call_packed("vm.builtin.empty_list")
+    gv59: Tuple(Tensor(None, "int32", ndim = 0), Tensor(None, "float32", ndim = 3)) = local_func(0, gv58, states, input)
+    gv60: Object = gv59[1]
+    gv61: Object = relax.call_packed("vm.builtin.empty_list")
+    gv62: Object = relax.call_packed("relax.run.tensor_list_write", gv61, 0, gv60)
+    gv63: Object = relax.call_packed("relax.run.tensor_list_stack", gv62)
+    gv64: Object = relax.call_packed("relax.run.tensor_list_read", gv63, 0)
+    gv65: Tuple(Tensor(None, "float32", ndim = 2), Tensor(None, "float32", ndim = 2)) = gv59[2]
+    gv66: Tuple() = (gv64, gv65)
+    return gv66

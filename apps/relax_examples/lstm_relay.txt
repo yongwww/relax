@@ -1,24 +1,4 @@
-graph:  graph(%self : __torch__.LSTMLayer,
-      %input.1 : Tensor,
-      %state.1 : (Tensor, Tensor)):
-  %3 : bool = prim::Constant[value=1]() # apps/relax_examples/lstm.py:79:8
-  %4 : int = prim::Constant[value=0]() # apps/relax_examples/lstm.py:79:34
-  %outputs.1 : Tensor[] = prim::ListConstruct()
-  %6 : int = aten::size(%input.1, %4) # apps/relax_examples/lstm.py:79:23
-  %outputs : Tensor[], %state : (Tensor, Tensor) = prim::Loop(%6, %3, %outputs.1, %state.1) # apps/relax_examples/lstm.py:79:8
-    block0(%i.1 : int, %outputs.11 : Tensor[], %state.11 : (Tensor, Tensor)):
-      %cell : __torch__.LayerNormLSTMCell = prim::GetAttr[name="cell"](%self)
-      %13 : Tensor = aten::select(%input.1, %4, %i.1) # apps/relax_examples/lstm.py:80:35
-      %14 : (Tensor, (Tensor, Tensor)) = prim::CallMethod[name="forward"](%cell, %13, %state.11) # apps/relax_examples/lstm.py:80:25
-      %out.1 : Tensor, %state.5 : (Tensor, Tensor) = prim::TupleUnpack(%14)
-      %17 : Tensor[] = prim::ListConstruct(%out.1)
-      %outputs.5 : Tensor[] = aten::add_(%outputs.11, %17) # apps/relax_examples/lstm.py:81:12
-      -> (%3, %outputs.5, %state.5)
-  %19 : Tensor = aten::stack(%outputs, %4) # apps/relax_examples/lstm.py:82:15
-  %20 : (Tensor, (Tensor, Tensor)) = prim::TupleConstruct(%19, %state)
-  return (%20)
-
-relay lstm mod:  type List[A] {
+type List[A] {
   Cons(A, List[A]),
   Nil,
 }

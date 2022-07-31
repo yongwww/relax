@@ -26,7 +26,7 @@ from torch import Tensor
 
 import tvm
 import tvm.testing
-from tvm import relay, relax
+from tvm import relay, relax, transform
 from tvm.runtime import vm as vm_rt
 from tvm.script import tir as T, relax as R
 from tvm.relay.frontend.pytorch import from_pytorch
@@ -151,8 +151,31 @@ if __name__ == "__main__":
 
     # translate the LSTM model from Relay to Relax
     target = tvm.target.Target("llvm", host="llvm")
-    relax_mod = relay_translator.from_relay(relay_mod, target)
-    relax_mod = relax.transform.LambdaLift()(relax_mod)
+    # relax_mod = relay_translator.from_relay(relay_mod, target)
+    # relax_mod = relax.transform.LambdaLift()(relax_mod)
+    with transform.PassContext(opt_level=3):
+        """
+        relay_mod = relay.transform.SimplifyInference()(relay_mod)
+        relay_mod = relay.transform.FoldConstant()(relay_mod)
+        relay_mod = relay.transform.FoldScaleAxis()(relay_mod)
+        relay_mod = relay.transform.CanonicalizeOps()(relay_mod)
+        relay_mod = relay.transform.AlterOpLayout()(relay_mod)
+        relay_mod = relay.transform.FoldConstant()(relay_mod)
+        relay_mod = relay.transform.FuseOps(fuse_opt_level=2)(relay_mod)
+        print("relay_mod after fuse: \n", relay_mod["main"])
+        """
+
+        relax_mod = relay_translator.from_relay(relay_mod, target=target)
+        relax_mod = relax.transform.LambdaLift()(relax_mod)
+        relax_mod = relax.transform.AnnotateTIROpPattern()(relax_mod)
+        relax_mod = relax.transform.FuseOps()(relax_mod)
+        relax_mod = relax.transform.FuseTIR()(relax_mod)
+        # relax_mod = relax.transform.LambdaLift()(relax_mod)
+
+    print("relax main: \n", relax_mod["main"])
+    print("relax lifted_func_0: \n", relax_mod["lifted_func_0"])
+    """
+    print("relax lifted_func_0 : \n", relax_mod["lifted_func_0"])
 
     relax_text = R.parser.astext(relax_mod, show_meta_data=True)
     # codegen
@@ -165,29 +188,10 @@ if __name__ == "__main__":
     # run on relax vm
     relax_out = relax_vm["main"](*input_params)
     relax_res = vmobj_to_list(relax_out)
-    print("relax inference result: \n", relax_res)
-
-    # run on relay vm
-    relay_ex = relay.vm.compile(relay_mod, target)
-    relay_vm = vm_rt.VirtualMachine(relay_ex, tvm.cpu())
-    relay_out = relay_vm.run(*input_params[:10])  # a hack, need to remove
-    relay_res = vmobj_to_list(relay_out)
-    print("relay inference result: \n", relay_res)
-
-    # check correctness by comparing with relay result
-    # tvm.testing.assert_allclose(res.numpy(), expected_output.numpy(), rtol=1e-4, atol=1e-4)
+    # print("relax inference result: \n", relax_res)
 
     warmup = 5
     iterations = 50
-    # Collect relay Inference perf
-    # warmup relay
-    for _ in range(warmup):
-        relay_vm.run(*input_params[:10])
-
-    relay_start_time = time.time()
-    for _ in range(iterations):
-        relay_vm.run(*input_params[:10])
-    relay_aver_perf = (time.time() - relay_start_time) / iterations
 
     # warmup relax
     for _ in range(warmup):
@@ -198,5 +202,27 @@ if __name__ == "__main__":
         relax_vm["main"](*input_params)
     relax_aver_perf = (time.time() - relax_start_time) / iterations
 
+    # run on relay vm
+    relay_ex = relay.vm.compile(relay_mod, target)
+    relay_vm = vm_rt.VirtualMachine(relay_ex, tvm.cpu())
+    relay_out = relay_vm.run(*input_params[:10])  # a hack, need to remove
+    relay_res = vmobj_to_list(relay_out)
+    # print("relay inference result: \n", relay_res)
+
+    # check correctness by comparing with relay result
+    # tvm.testing.assert_allclose(res.numpy(), expected_output.numpy(), rtol=1e-4, atol=1e-4)
+
+    # Collect relay Inference perf
+    # warmup relay
+    relax.DataflowBlock
+    for _ in range(warmup):
+        relay_vm.run(*input_params)
+
+    relay_start_time = time.time()
+    for _ in range(iterations):
+        relay_vm.run(*input_params)
+    relay_aver_perf = (time.time() - relay_start_time) / iterations
+
     print("Relay LSTM latency (second): ", relay_aver_perf)
     print("Relax LSTM latency (second): ", relax_aver_perf)
+    """

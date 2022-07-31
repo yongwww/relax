@@ -97,7 +97,10 @@ class GraphCreator : public ExprVisitor {
   static IndexedForwardGraph Create(IRModule mod, support::Arena* arena) {
     // Since cross-function call is not supported yet, FuseOps only serves the entry function, whose
     // name is "main".
-    auto relax_func = Downcast<Function>(mod->Lookup("main"));
+    for (auto mp : mod->functions) {
+      LOG(INFO) << "101 irmodule func: " << mp.first->name_hint;
+    }
+    auto relax_func = Downcast<Function>(mod->Lookup("lifted_func_0"));
     GraphCreator creator(mod, arena);
     creator(relax_func);
 
@@ -129,6 +132,7 @@ class GraphCreator : public ExprVisitor {
 
   void VisitBindingBlock(const BindingBlock& block) final {
     if (const auto* df_block = block.as<DataflowBlockNode>()) {
+      LOG(INFO) << "135 yeah, in dataflow block: " << df_block->bindings[0];
       VisitBindingBlock_(df_block);
     }
     // We skip ordinary binding blocks since they might be impure (with side effect or control flow)
@@ -565,6 +569,7 @@ class OperatorFusor : public ExprMutator {
       const BaseFunc& func = kv.second;
       // Only visit Relax function without attr kPrimitive.
       if (func->IsInstance<relax::FunctionNode>() & !func->HasNonzeroAttr(attr::kPrimitive)) {
+        LOG(INFO) << "568 get here, func name: " << gv->name_hint;
         auto updated_func = Downcast<Function>(VisitExpr(func));
         builder_->UpdateFunction(gv, updated_func);
       }
@@ -575,6 +580,7 @@ class OperatorFusor : public ExprMutator {
  private:
   BindingBlock VisitBindingBlock(const BindingBlock& block) final {
     if (const auto* df_block = block.as<DataflowBlockNode>()) {
+      LOG(INFO) << "583 yeah, in dataflow block: " << df_block->bindings[0];
       return VisitBindingBlock_(df_block);
     }
     // We skip ordinary binding blocks since they might be impure (with side effect or control flow)
@@ -582,6 +588,7 @@ class OperatorFusor : public ExprMutator {
   }
 
   BindingBlock VisitBindingBlock_(const DataflowBlockNode* block) final {
+    LOG(INFO) << "591 yeah, in dataflow block: " << block->bindings[0];
     group2func_.clear();
 
     // Step 1. Collect the bindings for each grouped function.
@@ -638,6 +645,7 @@ class OperatorFusor : public ExprMutator {
       Call call_to_emit = Call(gv, UpdateArgs(func_info.arguments_));
 
       if (var_binding->var->IsInstance<DataflowVarNode>()) {
+        LOG(INFO) << "648 yeah, in dataflow block: ";
         new_var = builder_->Emit(call_to_emit);
       } else {
         new_var = builder_->EmitOutput(call_to_emit);
