@@ -359,6 +359,17 @@ def test_function_without_return():
         def foo(x: R.Tensor((128, 128), "float32")):
             gv0 = R.call_tir("extern_func", x, (128, 128), dtype="float32")
 
+def test_deduce_single_func():
+    # test case by Jiawei
+    @R.function
+    def bug(x: R.Tensor((32, 32), "float32")) -> R.Tensor(None, "float32", ndim=2):
+        with R.dataflow():
+            lv0 = R.call_tir("extern_func", (x,), (32, 32), dtype="float32")
+            R.output(lv0)
+        return lv0
+    print(bug.body.blocks[0].bindings[0].var.checked_type)
+
 
 if __name__ == "__main__":
-    tvm.testing.main()
+    # tvm.testing.main()
+    test_deduce_single_func()
