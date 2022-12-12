@@ -37,7 +37,7 @@ DEFAULT_OP: Dict[Type, Callable[..., Any]] = {
     doc.BitXor: lambda a, b: a ^ b,
     doc.BitAnd: lambda a, b: a & b,
     doc.MatMult: lambda a, b: a @ b,
-    doc.Pow: lambda a, b: a**b,
+    doc.Pow: lambda a, b: a ** b,
     doc.Eq: lambda a, b: a == b,
     doc.NotEq: lambda a, b: a != b,
     doc.Lt: lambda a, b: a < b,
@@ -164,7 +164,9 @@ class ExprEvaluator:
         assert isinstance(node, doc.AST)
         if isinstance(node, doc.Name):
             if node.id not in self.value_table:
-                self.parser.report_error(node, f"Undefined variable: {node.id}")
+                self.parser.report_error(
+                    node, f"Undefined variable: {node.id}"
+                )  # todo(yongwww): error here
             return node
         if isinstance(
             node,

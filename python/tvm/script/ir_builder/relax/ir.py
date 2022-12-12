@@ -332,13 +332,27 @@ def emit_match_cast(value: Expr, struct_info: StructInfo) -> Var:
         The value of the MatchCast to be emitted.
     struct_info: StructInfo
         The struct_info of the MatchCast to be emitted.
-
     Returns
     -------
     var: Var
         The left side var of the emitted binding.
     """
     return _ffi_api.EmitMatchCast(value, struct_info)  # type: ignore
+
+
+def emit_var_binding(value: VarBinding) -> Var:
+    """Emit a binding to the last binding block frame.
+    Parameters
+    ----------
+    value: VarBinding
+        The right side value of the bindings to be emitted.
+
+    Returns
+    -------
+    var: Var
+        The left side var of the emitted binding.
+    """
+    return _ffi_api.EmitVarBinding(value)  # pylint: disable=no-member # type: ignore
 
 
 ############################# If Then Else #############################
@@ -494,6 +508,7 @@ __all__ = [
     "divide",
     "dtype",
     "emit",
+    "emit_var_binding",
     "emit_match_cast",
     "equal",
     "ewise_fma",

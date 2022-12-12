@@ -30,12 +30,16 @@ def _visit_class_def(self: Parser, node: doc.ClassDef) -> None:
     node : doc.ClassDef
         The doc AST class definition node.
     """
-
     with self.var_table.with_frame():
         with I.ir_module():
             for stmt in node.body:
                 if isinstance(stmt, doc.FunctionDef):
                     self.visit_tvm_declare_function(stmt)
+                    for inner_stmt in stmt.body:
+                        if isinstance(inner_stmt, doc.FunctionDef):
+                            # declare the local functions recursively
+                            self.visit_tvm_declare_local_function(inner_stmt)
+
             with self.with_dispatch_token("ir"):
                 self.visit_body(node.body)
 
@@ -77,3 +81,9 @@ def visit_assign(self: Parser, node: doc.Assign) -> None:
     self.eval_assign(
         target=lhs, source=rhs, bind_value=lambda _a, _b, _c, value: value, allow_shadowing=True
     )
+
+
+@dispatch.register(token="default", type_name="tvm_declare_function")
+def visit_tvm_declare_function(self: Parser, node: doc.FunctionDef) -> None:
+    global_var = I.decl_function(node.name)
+    self.var_table.add(node.name, global_var)

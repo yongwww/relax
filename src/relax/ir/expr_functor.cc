@@ -417,6 +417,7 @@ Expr ExprMutatorBase::VisitExpr_(const FunctionNode* op) {
 Expr ExprMutatorBase::VisitExpr_(const CallNode* call_node) {
   Expr new_op = this->VisitExpr(call_node->op);
   bool unchanged = call_node->op.same_as(new_op);
+  LOG(INFO) << "yongwww unchanged: " << unchanged << "  call_node->op: "  << call_node->op;
 
   Array<StructInfo> sinfo_args;
   for (StructInfo sinfo_arg : call_node->sinfo_args) {
@@ -424,6 +425,7 @@ Expr ExprMutatorBase::VisitExpr_(const CallNode* call_node) {
     sinfo_args.push_back(new_sinfo_arg);
     unchanged &= new_sinfo_arg.same_as(sinfo_arg);
   }
+  LOG(INFO) << "yongwww unchanged: " << unchanged << "  call_node->op: "  << call_node->op;
 
   tvm::Array<Expr> call_args;
   for (Expr arg : call_node->args) {
@@ -652,6 +654,7 @@ void ExprMutator::ReEmitBinding(const VarBindingNode* binding, Expr new_value) {
   Var new_var = this->VisitVarDef(binding->var);
 
   // fast path: reemit binding if nothing changes
+  
   if (new_var.same_as(binding->var) && new_value.same_as(binding->value)) {
     builder_->EmitNormalized(GetRef<VarBinding>(binding));
     return;

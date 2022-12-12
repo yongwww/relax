@@ -25,7 +25,6 @@ from tvm.relax.analysis import (
     all_global_vars,
     all_vars,
     bound_vars,
-    called_global_vars,
     free_vars,
     has_reshape_pattern,
     name_to_binding,
@@ -353,21 +352,6 @@ def test_all_global_vars():
     call = rx.Call(gv1, [gv2, gv3])
     call_var_names = var_name_set(all_global_vars(call))
     assert call_var_names == {"gv1", "gv2", "gv3"}
-
-
-def test_called_global_vars():
-    # there is one call to "func"
-    global_vars = called_global_vars(VarExample["main"])
-    assert len(global_vars) == 1
-    assert global_vars[0].name_hint == "func"
-
-    gv1 = rx.GlobalVar("gv1")
-    gv2 = rx.GlobalVar("gv2")
-    gv3 = rx.GlobalVar("gv3")
-    call = rx.Call(gv1, [gv2, gv3])
-    call_vars = called_global_vars(call)
-    assert len(call_vars) == 1
-    assert call_vars[0].name_hint == "gv1"
 
 
 def test_reshape_pattern_reshape():

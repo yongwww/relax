@@ -87,15 +87,6 @@ class VarVisitor : protected ExprVisitor {
     return ret;
   }
 
-  Array<GlobalVar> CalledGlobalVars(const Expr& expr) {
-    this->VisitExpr(expr);
-    Array<GlobalVar> ret;
-    for (const auto& v : called_global_vars_.data) {
-      ret.push_back(v);
-    }
-    return ret;
-  }
-
   void MarkBounded(const Var& v) {
     bound_vars_.Insert(v);
     vars_.Insert(v);
@@ -122,10 +113,6 @@ class VarVisitor : protected ExprVisitor {
     for (Expr arg : call_node->args) {
       VisitExpr(arg);
     }
-
-    if (const GlobalVarNode* global_var_node = call_node->op.as<GlobalVarNode>()) {
-      called_global_vars_.Insert(GetRef<GlobalVar>(global_var_node));
-    }
   }
 
   void VisitBinding_(const VarBindingNode* binding) final {
@@ -143,7 +130,6 @@ class VarVisitor : protected ExprVisitor {
   InsertionSet<Var> vars_;
   InsertionSet<Var> bound_vars_;
   InsertionSet<GlobalVar> global_vars_;
-  InsertionSet<GlobalVar> called_global_vars_;
 };
 
 class DimVisitor : public tir::ExprVisitor {
@@ -186,10 +172,6 @@ tvm::Array<Var> AllVars(const Expr& expr) { return VarVisitor().All(expr); }
 
 tvm::Array<GlobalVar> AllGlobalVars(const Expr& expr) { return VarVisitor().AllGlobalVars(expr); }
 
-tvm::Array<GlobalVar> CalledGlobalVars(const Expr& expr) {
-  return VarVisitor().CalledGlobalVars(expr);
-}
-
 TVM_REGISTER_GLOBAL("relax.analysis.shape_vars").set_body_typed(ShapeVars);
 
 TVM_REGISTER_GLOBAL("relax.analysis.free_vars").set_body_typed(FreeVars);
@@ -200,7 +182,6 @@ TVM_REGISTER_GLOBAL("relax.analysis.all_vars").set_body_typed(AllVars);
 
 TVM_REGISTER_GLOBAL("relax.analysis.all_global_vars").set_body_typed(AllGlobalVars);
 
-TVM_REGISTER_GLOBAL("relax.analysis.called_global_vars").set_body_typed(CalledGlobalVars);
 
 }  // namespace relax
 }  // namespace tvm

@@ -502,6 +502,11 @@ class Parser(doc.NodeVisitor):
         with self.with_dispatch_token(token):
             _dispatch(self, "tvm_declare_function")(self, node)
 
+    def visit_tvm_declare_local_function(self, node: doc.FunctionDef) -> None:
+        token = self.get_dispatch_token(node)
+        with self.with_dispatch_token(token):
+            _dispatch(self, "tvm_declare_local_function")(self, node)
+
     def visit_ClassDef(self, node: doc.ClassDef) -> Any:  # pylint: disable=invalid-name
         """The general class definition visiting method.
 

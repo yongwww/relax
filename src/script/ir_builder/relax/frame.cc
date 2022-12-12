@@ -64,10 +64,13 @@ void FunctionFrameNode::ExitWithScope() {
                             /*attrs=*/dict_attrs);
   // Step 2: Update IRModule.
   if (builder->frames.empty()) {
+    // todo (yongwww): working here
+    LOG(INFO) << "79 get here func name: " << name.value();
     // Case 0. No outer frame, return function directly
     ICHECK(!builder->result.defined()) << "ValueError: Builder.result has already been set";
     builder->result = func;
   } else if (Optional<IRModuleFrame> opt_frame = builder->FindFrame<IRModuleFrame>()) {
+    LOG(INFO) << "84 get here func name: " << name.value();
     // Case 1. A global function of an IRModule
     CHECK(name.defined()) << "ValueError: The function name must be defined before exiting the "
                              "function scope, if it's defined in a Module";
@@ -79,7 +82,7 @@ void FunctionFrameNode::ExitWithScope() {
     }
     // Define the function.
     // Note we do checks to disallow redefinition of functions inside the `DefFunction`.
-    ir::DefFunction(func_name, func);
+    ir::DefFunction(func_name, func); // todo (yongwww): working here
   } else {
     LOG(FATAL) << "ValueError: Cannot find where to insert Relax.Function";
   }
@@ -119,11 +122,13 @@ class DataflowBlockRewriter : public tvm::relax::ExprMutator {
  private:
   explicit DataflowBlockRewriter(const Array<tvm::relax::Var>& output_vars) {
     for (const tvm::relax::Var& var : output_vars) {
+      LOG(INFO) << "137: var: " << var->name_hint();
       output_var_set_.insert(var.get());
     }
   }
 
   tvm::relax::Var VisitVarDef_(const tvm::relax::DataflowVarNode* op) final {
+    LOG(INFO) << "143: DataflowVarNode: " << op->name_hint();
     auto it = output_var_set_.find(op);
     if (it != output_var_set_.end()) {
       // Rewrite dataflow vars to global vars
@@ -168,6 +173,7 @@ void BlockFrameNode::ExitWithScope() {
     // Step 3.3. Rewrite output vars
     Array<tvm::relax::Var> new_output_vars;
     for (const auto& var : output_vars) {
+      LOG(INFO) << "198 var: " << var->name_hint();
       auto it = new_global_vars.find(var->vid);
       ICHECK(it != new_global_vars.end());
       new_output_vars.push_back((*it).second);

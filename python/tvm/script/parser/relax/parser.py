@@ -128,6 +128,8 @@ def collect_symbolic_var_from_params(self: Parser, node: doc.FunctionDef) -> Non
 
 @dispatch.register(token="relax", type_name="FunctionDef")
 def visit_function_def(self: Parser, node: doc.FunctionDef) -> None:
+    if node.name not in self.var_table.get():
+        self.visit_tvm_declare_function(node)
     with self.var_table.with_frame():
         with self.with_dispatch_token("relax"):
             with R.function():
@@ -157,6 +159,7 @@ def visit_tvm_declare_function(self: Parser, node: doc.FunctionDef) -> None:
     with self.var_table.with_frame():
         collect_symbolic_var_from_params(self, node)
 
+        print("visit visit_tvm_declare_function func: ", node.name)
         if node.returns is None:
             # Use ObjectStructInfo as unknown return type
             # NOTE: Cannot use VoidStructInfo here because the return type can be refined later.
@@ -177,6 +180,40 @@ def visit_tvm_declare_function(self: Parser, node: doc.FunctionDef) -> None:
     self.var_table.add(node.name, global_var)
 
 
+@dispatch.register(token="relax", type_name="tvm_declare_local_function")
+def visit_tvm_declare_local_function(self: Parser, node: doc.FunctionDef) -> None:
+    print("visit visit_tvm_declare_local_function func: ", node.name)
+    # todo (yongwww): update according to the visit_tvm_declare_function
+    if node.returns is None:
+        ret_type, ret_shape = None, None
+    else:
+        ret_type, ret_shape = eval_type_annotation(self, node.returns)
+    params = []
+    arg_types = []
+    for arg in node.args.args:
+        if arg.annotation is None:
+            self.report_error(arg, "Type annotation is required for function parameters.")
+        param_type, param_shape = self.visit_tvm_annotation(arg.annotation)
+        arg_types.append(param_type)
+        params.append(relax.Var(arg.arg, param_shape, param_type))
+
+    # ret_shape = relax.RuntimeDepShape()
+    decl_var = relax.Var(node.name, ret_shape, relax.FuncType(arg_types, ret_type))
+
+    print(
+        "200 decl_var: {} vid: {} \nchecked_type:{}".format(
+            decl_var, decl_var.vid, decl_var.checked_type
+        )
+    )
+    self.var_table.add(node.name, decl_var)
+
+    # declare the multi-level nested functions
+    for inner_stmt in node.body:
+        if isinstance(inner_stmt, doc.FunctionDef):
+            print("yongwww second level local func debugging: ", inner_stmt.name)
+            self.visit_tvm_declare_local_function(inner_stmt)
+
+
 @dispatch.register(token="relax", type_name="pre_token_switch")
 def pre_token_switch(self: Parser, node: doc.Expr) -> None:  # pylint: disable=unused-argument
     ir_builder = IRBuilder()
@@ -188,7 +225,16 @@ def post_token_switch(self: Parser, node: doc.Expr) -> None:
     ir_builder = IRBuilder.current()
     result = ir_builder.get()
     ir_builder.__exit__(None, None, None)
-    var = R.emit(result)
+    reserved_var = self.var_table.get().get(node.name)
+    print("get reserved var: {} vid: {} ".format(reserved_var, reserved_var.vid))
+    bind = relax.VarBinding(reserved_var, result)
+
+    var = R.emit_var_binding(bind)
+    print(
+        "yongwww node.name: {}  var: {} -  name: {}  - vid: {}".format(
+            node.name, var, var.name_hint, var.vid
+        )
+    )
     IRBuilder.name(node.name, var)
     self.var_table.add(node.name, var, allow_shadowing=False)
 

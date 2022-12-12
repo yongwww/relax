@@ -46,26 +46,91 @@ class LambdaLifter : public ExprMutator {
 
   using ExprMutator::VisitExpr_;
 
+  void VisitBinding_(const VarBindingNode* binding) final {
+    bool is_lambda = false;
+    if (auto func = binding->value.as<FunctionNode>()) {
+      if (!func->HasNonzeroAttr(attr::kPrimitive)) {
+        is_lambda = true;
+        recur_vars_.push_back(binding->var);
+      }
+    }
+
+    Expr new_value = this->VisitExpr(binding->value);
+    Var new_var = this->VisitVarDef(binding->var);
+
+    LOG(INFO) << "\nyongwww emit new_var: " << new_var->name_hint() << " VAR: " << new_var
+              << " \n vid: " << new_var->vid << " checked_type: " << new_var->checked_type_
+              << " \n emit new_var shape:  " << new_var->shape_ << "\n new_value: " << new_value
+              << " new_value shape: " << new_value->shape_;
+
+    auto emit = [this](VarBinding b) {
+      Var test;
+      if (this->builder_->CurrentBlockIsDataFlow() && !b->var.as<DataflowVarNode>()) {
+        LOG(INFO) << "get here 68";
+        test = this->builder_->EmitOutput(b);
+      } else {
+        LOG(INFO) << "get here 72";
+        test = this->builder_->Emit(b);
+      }
+      LOG(INFO) << "\nyongwww emit varbinding:  " << test << " name: " << test->name_hint()
+                << "\nvid: " << test->vid << " checked_type: " << test->checked_type_
+                << "\n shape: " << test->shape_;
+    };
+
+    if (new_var.same_as(binding->var) && new_value.same_as(binding->value)) {
+      emit(GetRef<VarBinding>(binding));
+      return;
+    }
+
+    LOG(INFO) << "\nyongwww emit old_var: " << binding->var
+              << " name: " << binding->var->name_hint() << "\nvid: " << binding->var->vid
+              << " checked_type: " << binding->var->checked_type_
+              << "\n shape: " << binding->var->shape_;
+    if (!recur_vars_.empty() && recur_vars_.back() == new_var) {
+      new_var->checked_type_ = new_value->checked_type_;
+      new_var->shape_ = new_value->shape_;
+      LOG(INFO) << "DEBUG 83, var: " << new_var << "  vid: " << new_var->vid
+                << "  name:" << new_var->name_hint() << " shape: " << new_var->shape_;
+    }
+
+    LOG(INFO) << "83  yongwww emit new_var: " << new_var << " name:" << new_var->name_hint()
+              << " vid: " << new_var->vid << " checked_type: " << new_var->checked_type_
+              << " shape: " << new_var->shape_;
+
+    if (new_value->shape_ == nullptr || new_value->shape_ == (nullptr)) {
+      LOG(INFO) << "yongwww new_value get here";
+      // todo (yongwww): working
+      // new_value->shape_ = RuntimeDepShape();
+    }
+
+    emit(VarBinding(new_var, new_value));
+
+    if (is_lambda) {
+      recur_vars_.pop_back();
+    }
+  }
+
   Expr VisitExpr_(const CallNode* call_node) final {
     auto call = Downcast<Call>(ExprMutator::VisitExpr_(call_node));
-    if (auto const* var = call_node->op.as<VarNode>()) {
-      bool has_closure = HasClosure(GetRef<Var>(var));
-      auto val = builder_->LookupBinding(GetRef<Var>(var));
+    if (auto const* var_node = call_node->op.as<VarNode>()) {
+      auto var = GetRef<Var>(var_node);
+      bool has_closure = HasClosure(var);
+      auto val = builder_->LookupBinding(var);
+      LOG(INFO) << "106 yongwww var " << var->name_hint() << " \n--- var: " << var
+                << " \n--- vid: " << var->vid << " \ntype: " << var->checked_type_
+                << "  \nhas_closure: " << has_closure << " \n val: " << val;
       // Call "relax.invoke_closure" to invoke closure
-      if (has_closure && val.as<CallNode>()) {
-        Var clo_arg = GetRef<Var>(var);
+      if (has_closure && val->IsInstance<CallNode>()) {
+        Var clo_arg = var;
         if (this->var_remap_.find(var->vid) != this->var_remap_.end()) {
           clo_arg = this->var_remap_.at(var->vid);
         }
         return Call(invoke_closure_op_, {clo_arg, Tuple(call_node->args)}, {},
                     {GetStructInfo(GetRef<Expr>(call_node))});
       }
-    }
-    if (auto global_var_node = call_node->op.as<GlobalVarNode>()) {
-      String rec_name = global_var_node->name_hint;
-      auto global_var = GetRef<GlobalVar>(global_var_node);
-      auto it = lambda_map_.find(global_var);
+      auto it = lambda_map_.find(var);
       if (it != lambda_map_.end()) {
+        LOG(INFO) << "get here it->second: " << it->second;
         // flatten nested call, e.g. call(y)(x) -> call(x, y))
         Array<relay::Expr> new_args;
         for (const auto arg : call->args) {
@@ -77,6 +142,7 @@ class LambdaLifter : public ExprMutator {
           }
           return Call(nest_call->op, new_args, call_node->attrs, call_node->sinfo_args);
         }
+        LOG(INFO) << "130 get here it->second: " << it->second;
         return Call(it->second, call->args, call_node->attrs, call_node->sinfo_args);
       }
     }
@@ -89,27 +155,44 @@ class LambdaLifter : public ExprMutator {
     // TODO(@yongwww): consider appending inner func name into the lifted func name
     String lift_func_name = "lifted_func_" + std::to_string(lift_func_num_++);
     auto global = GlobalVar(lift_func_name);
-    Array<Var> captured_vars = FreeVars(func);
-    recur_vars_ = CalledGlobalVars(func);
-    auto all_global_vars = AllGlobalVars(func);
+    Array<Var> free_vars = FreeVars(func);
+    Array<Var> captured_vars;
 
     Array<Var> typed_captured_vars;
+    bool recursive = false;
+    // recur_vars_.push_back(free_vars[1])
+    for (const auto& var : free_vars) {
+      if (!recur_vars_.empty() && var == recur_vars_.back()) {
+        recursive = true;
+      } else {
+        captured_vars.push_back(var);
+      }
+    }
+
     Map<Var, Expr> rebinding_map;
     for (auto free_var : captured_vars) {
       Var var = Var(free_var->name_hint(), GetStructInfo(free_var), free_var->span);
+      // var->shape_ = free_var->shape_; todo (yongwww)
       typed_captured_vars.push_back(var);
       rebinding_map.Set(free_var, var);
     }
-
     // recursive call
-    if (!recur_vars_.empty()) {
+    LOG(INFO) << "recur_vars_ size: " << recur_vars_.size() << "  recursive: " << recursive;
+    if (recursive) {
       if (!captured_vars.empty()) {
         Array<Expr> fvs;
         for (auto fv : captured_vars) {
           fvs.push_back(fv);
         }
+        // checked_type_ is required by block_blocker, it will be reset later
+        UpdateType(global, recur_vars_.back()->checked_type());
+        LOG(INFO) << "DEBUG 181 yongwww recur_vars_.back()->shape_: " << recur_vars_.back()->shape_
+                  << " recur_vars_.back()->checked_type_: " << recur_vars_.back()->checked_type_;
+        // UpdateType(global, recur_vars_.back()->checked_type());
+        // UpdateType(global, free_vars[0]->checked_type_); // todo(yongwww): Update here
         lambda_map_.emplace(recur_vars_.back(), Call(global, fvs));
       } else {
+        LOG(INFO) << "nothing here right?";
         if (recur_vars_.size() > 0) {
           lambda_map_.emplace(recur_vars_.back(), global);
         }
@@ -123,7 +206,6 @@ class LambdaLifter : public ExprMutator {
       params.push_back(new_param);
       all_params_unchanged &= param.same_as(new_param);
     }
-
     Expr body = this->VisitWithNewScope(func_node->body);
     Expr visited_func;
 
@@ -131,8 +213,10 @@ class LambdaLifter : public ExprMutator {
       visited_func = GetRef<Expr>(func_node);
     } else if (const auto& body_sinfo = MatchStructInfo<ObjectStructInfo>(body)) {
       visited_func = Function(params, body, body_sinfo.value(), func_node->attrs);
+      // Function(params, body, body->checked_type_, RuntimeDepShape(), func_node->attrs)
     } else {
       visited_func = Function(params, body, func_node->ret_struct_info, func_node->attrs);
+      // Function(params, body, func_node->ret_type, func_node->ret_shape, func_node->attrs);
     }
     auto new_func = Downcast<Function>(visited_func);
 
@@ -162,11 +246,9 @@ class LambdaLifter : public ExprMutator {
                              /*attrs=*/new_func->attrs,
                              /*span=*/func->span);
 
-      Array<Type> param_types;
       for (Var param : closure_params) {
         CHECK(param->checked_type_.defined())
             << "relax.Function requires params to contain checked_type_";
-        param_types.push_back(param->checked_type_);
       }
     }
 
@@ -174,7 +256,10 @@ class LambdaLifter : public ExprMutator {
 
     // Add the lifted function to the module.
     UpdateStructInfo(global, GetStructInfo(lifted_func));
+    // global->checked_type_ = lifted_func->checked_type_;
+    // global->shape_ = lifted_func->shape_;
     builder_->UpdateFunction(global, lifted_func);
+    LOG(INFO) << "is_closure: " << is_closure;
 
     if (!is_closure) {
       return std::move(global);
@@ -242,9 +327,10 @@ class LambdaLifter : public ExprMutator {
   }
 
  private:
-  std::unordered_map<GlobalVar, Expr, ObjectPtrHash, ObjectPtrEqual> lambda_map_;
-  Array<GlobalVar> recur_vars_;
+  std::unordered_map<Var, Expr, ObjectPtrHash, ObjectPtrEqual> lambda_map_;
+  Array<Var> recur_vars_;
   IRModule mod_;
+  Type rec_type;
   size_t lift_func_num_ = 0;
   /*! \brief Cache ops that would be used later to reduce lookup overhead. */
   const Op& make_closure_op_ = Op::Get("relax.make_closure");
