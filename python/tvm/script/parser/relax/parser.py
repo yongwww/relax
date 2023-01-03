@@ -128,8 +128,6 @@ def collect_symbolic_var_from_params(self: Parser, node: doc.FunctionDef) -> Non
 
 @dispatch.register(token="relax", type_name="FunctionDef")
 def visit_function_def(self: Parser, node: doc.FunctionDef) -> None:
-    if node.name not in self.var_table.get():
-        self.visit_tvm_declare_function(node)
     with self.var_table.with_frame():
         with self.with_dispatch_token("relax"):
             with R.function():
@@ -183,26 +181,32 @@ def visit_tvm_declare_function(self: Parser, node: doc.FunctionDef) -> None:
 @dispatch.register(token="relax", type_name="tvm_declare_local_function")
 def visit_tvm_declare_local_function(self: Parser, node: doc.FunctionDef) -> None:
     print("visit visit_tvm_declare_local_function func: ", node.name)
-    # todo (yongwww): update according to the visit_tvm_declare_function
-    if node.returns is None:
-        ret_type, ret_shape = None, None
-    else:
-        ret_type, ret_shape = eval_type_annotation(self, node.returns)
-    params = []
-    arg_types = []
-    for arg in node.args.args:
-        if arg.annotation is None:
-            self.report_error(arg, "Type annotation is required for function parameters.")
-        param_type, param_shape = self.visit_tvm_annotation(arg.annotation)
-        arg_types.append(param_type)
-        params.append(relax.Var(arg.arg, param_shape, param_type))
+    with self.var_table.with_frame():
+        collect_symbolic_var_from_params(self, node)
+
+        print("visit visit_tvm_declare_function func: ", node.name)
+        if node.returns is None:
+            ret_sinfo = relax.TupleStructInfo([])
+        else:
+            ret_sinfo = eval_struct_info(self, node.returns, eval_str=True)
+        params = []
+        params_sinfo = []
+        for arg in node.args.args:
+            if arg.annotation is None:
+                self.report_error(arg, "Type annotation is required for function parameters.")
+            param_sinfo = eval_struct_info(self, arg.annotation, eval_str=True)
+            params_sinfo.append(param_sinfo)
+            params.append(relax.Var(arg.arg, param_sinfo))
 
     # ret_shape = relax.RuntimeDepShape()
-    decl_var = relax.Var(node.name, ret_shape, relax.FuncType(arg_types, ret_type))
+
+    decl_var = relax.Var(
+        node.name, relax.FuncStructInfo(params_sinfo, ret_sinfo)
+    )  # relax.FuncType(arg_types, ret_type)
 
     print(
-        "200 decl_var: {} vid: {} \nchecked_type:{}".format(
-            decl_var, decl_var.vid, decl_var.checked_type
+        "200 decl_var: {} vid: {} \nstruct_info:{}".format(
+            decl_var, decl_var.vid, decl_var.struct_info
         )
     )
     self.var_table.add(node.name, decl_var)

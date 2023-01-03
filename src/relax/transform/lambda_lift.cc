@@ -54,63 +54,41 @@ class LambdaLifter : public ExprMutator {
         recur_vars_.push_back(binding->var);
       }
     }
-
     Expr new_value = this->VisitExpr(binding->value);
-    Var new_var = this->VisitVarDef(binding->var);
-
-    LOG(INFO) << "\nyongwww emit new_var: " << new_var->name_hint() << " VAR: " << new_var
-              << " \n vid: " << new_var->vid << " checked_type: " << new_var->checked_type_
-              << " \n emit new_var shape:  " << new_var->shape_ << "\n new_value: " << new_value
-              << " new_value shape: " << new_value->shape_;
-
-    auto emit = [this](VarBinding b) {
-      Var test;
-      if (this->builder_->CurrentBlockIsDataFlow() && !b->var.as<DataflowVarNode>()) {
-        LOG(INFO) << "get here 68";
-        test = this->builder_->EmitOutput(b);
-      } else {
-        LOG(INFO) << "get here 72";
-        test = this->builder_->Emit(b);
+    LOG(INFO) << " \n58 yongwww binding->var: " << binding->var->name_hint()
+              << " type: " << binding->var->checked_type_
+              << "\n sinfo: " << binding->var->struct_info_
+              <<" \nbinding->value: " << binding->value
+              <<" \nnew_value: " << new_value
+              << "\n GetStructInfo(new_value): " << GetStructInfo(new_value)
+              << "\n new_value sinfo: " << new_value->struct_info_
+              << "\n new_value.same_as(binding->value: " << new_value.same_as(binding->value);
+    if (!binding->var->struct_info_.defined()) {
+      UpdateStructInfo(binding->var, GetStructInfo(new_value));
+    }
+    if (new_value.same_as(binding->value)) {
+      if (new_value->struct_info_.defined()) {
+        binding->var->struct_info_ = GetStructInfo(new_value);
+        binding->var->checked_type_ = new_value->checked_type_;
       }
-      LOG(INFO) << "\nyongwww emit varbinding:  " << test << " name: " << test->name_hint()
-                << "\nvid: " << test->vid << " checked_type: " << test->checked_type_
-                << "\n shape: " << test->shape_;
-    };
-
-    if (new_var.same_as(binding->var) && new_value.same_as(binding->value)) {
-      emit(GetRef<VarBinding>(binding));
-      return;
+      builder_->EmitNormalized(GetRef<VarBinding>(binding));
+    } else {
+      if (new_value->struct_info_.defined()) {
+        binding->var->struct_info_ = GetStructInfo(new_value);
+        binding->var->checked_type_ = new_value->checked_type_;
+        // if (binding->var->name_hint() == "in_call") {
+        //  binding->var->struct_info_ = ObjectStructInfo();
+        // }
+      }
+      builder_->EmitNormalized(VarBinding(binding->var, new_value));
     }
-
-    LOG(INFO) << "\nyongwww emit old_var: " << binding->var
-              << " name: " << binding->var->name_hint() << "\nvid: " << binding->var->vid
-              << " checked_type: " << binding->var->checked_type_
-              << "\n shape: " << binding->var->shape_;
-    if (!recur_vars_.empty() && recur_vars_.back() == new_var) {
-      new_var->checked_type_ = new_value->checked_type_;
-      new_var->shape_ = new_value->shape_;
-      LOG(INFO) << "DEBUG 83, var: " << new_var << "  vid: " << new_var->vid
-                << "  name:" << new_var->name_hint() << " shape: " << new_var->shape_;
-    }
-
-    LOG(INFO) << "83  yongwww emit new_var: " << new_var << " name:" << new_var->name_hint()
-              << " vid: " << new_var->vid << " checked_type: " << new_var->checked_type_
-              << " shape: " << new_var->shape_;
-
-    if (new_value->shape_ == nullptr || new_value->shape_ == (nullptr)) {
-      LOG(INFO) << "yongwww new_value get here";
-      // todo (yongwww): working
-      // new_value->shape_ = RuntimeDepShape();
-    }
-
-    emit(VarBinding(new_var, new_value));
-
     if (is_lambda) {
       recur_vars_.pop_back();
     }
   }
 
   Expr VisitExpr_(const CallNode* call_node) final {
+    LOG(INFO) << " call_node op is " << call_node->op << " sinfo: " << call_node->struct_info_;
     auto call = Downcast<Call>(ExprMutator::VisitExpr_(call_node));
     if (auto const* var_node = call_node->op.as<VarNode>()) {
       auto var = GetRef<Var>(var_node);
@@ -128,23 +106,45 @@ class LambdaLifter : public ExprMutator {
         return Call(invoke_closure_op_, {clo_arg, Tuple(call_node->args)}, {},
                     {GetStructInfo(GetRef<Expr>(call_node))});
       }
+      //if (val->IsInstance<GlobalVarNode>()) {
+      //}
       auto it = lambda_map_.find(var);
       if (it != lambda_map_.end()) {
         LOG(INFO) << "get here it->second: " << it->second;
         // flatten nested call, e.g. call(y)(x) -> call(x, y))
         Array<relay::Expr> new_args;
+        Array<StructInfo> params;
         for (const auto arg : call->args) {
           new_args.push_back(arg);
+          params.push_back(StructInfoFromType(arg->checked_type()));
         }
         if (const auto* nest_call = it->second.as<CallNode>()) {
+          // Update the StructInfo accordingly
+          // FuncStructInfo
+          
           for (const auto arg : nest_call->args) {
             new_args.push_back(arg);
+            params.push_back(StructInfoFromType(arg->checked_type()));
           }
+          LOG(INFO) << " nest_call->op: " << nest_call->op
+                    << "\n nest_call->op sinfo: " << nest_call->op->struct_info_
+                    << "\n call-> sinfo: " << nest_call->struct_info_;
+          // StructInfo ret = StructInfoFromType(func_type->ret_type);
+          StructInfo new_func_sinfo;
+          if (const auto* fsinfo = nest_call->op->struct_info_.as<FuncStructInfoNode>()) {
+            auto func_sinfo = GetRef<FuncStructInfo>(fsinfo);
+            new_func_sinfo = FuncStructInfo(params, func_sinfo->ret);
+          }
+          // UpdateStructInfo(nest_call->op, new_func_sinfo);
+          nest_call->op->struct_info_ = new_func_sinfo;
+          LOG(INFO) << "\n updated nest_call->op sinfo: " << nest_call->op->struct_info_
+                    << "\n call-> sinfo: " << nest_call->struct_info_;
           return Call(nest_call->op, new_args, call_node->attrs, call_node->sinfo_args);
         }
         LOG(INFO) << "130 get here it->second: " << it->second;
         return Call(it->second, call->args, call_node->attrs, call_node->sinfo_args);
       }
+      // builder_->Emit(call_node);
     }
     return std::move(call);
   }
@@ -185,8 +185,11 @@ class LambdaLifter : public ExprMutator {
           fvs.push_back(fv);
         }
         // checked_type_ is required by block_blocker, it will be reset later
-        UpdateType(global, recur_vars_.back()->checked_type());
-        LOG(INFO) << "DEBUG 181 yongwww recur_vars_.back()->shape_: " << recur_vars_.back()->shape_
+        // UpdateType(global, recur_vars_.back()->checked_type());
+        // global->checked_type_ = recur_vars_.back()->checked_type();
+        UpdateStructInfo(global, GetStructInfo(recur_vars_.back()));
+        // UpdateStructInfo(global, GetStructInfo(lifted_func));
+        LOG(INFO) << "DEBUG 181 yongwww recur_vars_.back()->shape_: " //<< recur_vars_.back()->shape_
                   << " recur_vars_.back()->checked_type_: " << recur_vars_.back()->checked_type_;
         // UpdateType(global, recur_vars_.back()->checked_type());
         // UpdateType(global, free_vars[0]->checked_type_); // todo(yongwww): Update here
@@ -255,7 +258,8 @@ class LambdaLifter : public ExprMutator {
     ICHECK(lifted_func.defined());
 
     // Add the lifted function to the module.
-    UpdateStructInfo(global, GetStructInfo(lifted_func));
+    global->struct_info_ = GetStructInfo(lifted_func);
+    // UpdateStructInfo(global, GetStructInfo(lifted_func));
     // global->checked_type_ = lifted_func->checked_type_;
     // global->shape_ = lifted_func->shape_;
     builder_->UpdateFunction(global, lifted_func);
@@ -328,9 +332,8 @@ class LambdaLifter : public ExprMutator {
 
  private:
   std::unordered_map<Var, Expr, ObjectPtrHash, ObjectPtrEqual> lambda_map_;
-  Array<Var> recur_vars_;
+  Array<Var> recur_vars_; // todo: -> lifted_vars
   IRModule mod_;
-  Type rec_type;
   size_t lift_func_num_ = 0;
   /*! \brief Cache ops that would be used later to reduce lookup overhead. */
   const Op& make_closure_op_ = Op::Get("relax.make_closure");

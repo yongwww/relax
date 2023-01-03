@@ -20,8 +20,6 @@
 #define TVM_SCRIPT_IR_BUILDER_RELAX_FRAME_H_
 
 #include <tvm/relax/block_builder.h>
-#include <tvm/relax/expr.h>
-#include <tvm/ir/function.h>
 #include <tvm/script/ir_builder/base.h>
 #include <tvm/script/ir_builder/ir/frame.h>
 #include <tvm/script/ir_builder/ir/ir.h>
@@ -101,8 +99,6 @@ class FunctionFrameNode : public SeqExprFrameNode {
 
   /*! \brief The function attributes. */
   Map<String, ObjectRef> attrs;
-  /*! \brief the inner local functions */
-  Optional<Array<BaseFunc>> local_funcs;
   /*! \brief The block builder to create Relax function. */
   tvm::relax::BlockBuilder block_builder;
 

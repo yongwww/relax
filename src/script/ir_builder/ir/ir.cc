@@ -58,7 +58,6 @@ GlobalVar DeclFunction(const String& func_name, const BaseFunc& func_signature) 
 }
 
 void DefFunction(const String& func_name, const BaseFunc& func) {
-  LOG(INFO) << "70 yongwww DefFunction: " << func_name;
   IRModuleFrame frame = FindModuleFrame("I.DefFunction");
   auto it = frame->global_var_map.find(func_name);
   CHECK(it != frame->global_var_map.end())

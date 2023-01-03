@@ -164,9 +164,7 @@ class ExprEvaluator:
         assert isinstance(node, doc.AST)
         if isinstance(node, doc.Name):
             if node.id not in self.value_table:
-                self.parser.report_error(
-                    node, f"Undefined variable: {node.id}"
-                )  # todo(yongwww): error here
+                self.parser.report_error(node, f"Undefined variable: {node.id}")
             return node
         if isinstance(
             node,

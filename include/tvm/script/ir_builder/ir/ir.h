@@ -20,7 +20,6 @@
 #define TVM_SCRIPT_IR_BUILDER_IR_IR_H_
 
 #include <tvm/ir/expr.h>
-#include <tvm/relax/expr.h>
 #include <tvm/ir/function.h>
 #include <tvm/node/node.h>
 #include <tvm/script/ir_builder/ir/frame.h>
@@ -54,7 +53,6 @@ TVM_DLL GlobalVar DeclFunction(const String& func_name, const BaseFunc& func_sig
  * \param func The given function implementation
  */
 TVM_DLL void DefFunction(const String& func_name, const BaseFunc& func);
-
 
 }  // namespace ir
 }  // namespace ir_builder

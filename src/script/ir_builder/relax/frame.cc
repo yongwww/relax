@@ -64,8 +64,6 @@ void FunctionFrameNode::ExitWithScope() {
                             /*attrs=*/dict_attrs);
   // Step 2: Update IRModule.
   if (builder->frames.empty()) {
-    // todo (yongwww): working here
-    LOG(INFO) << "79 get here func name: " << name.value();
     // Case 0. No outer frame, return function directly
     ICHECK(!builder->result.defined()) << "ValueError: Builder.result has already been set";
     builder->result = func;
@@ -82,7 +80,7 @@ void FunctionFrameNode::ExitWithScope() {
     }
     // Define the function.
     // Note we do checks to disallow redefinition of functions inside the `DefFunction`.
-    ir::DefFunction(func_name, func); // todo (yongwww): working here
+    ir::DefFunction(func_name, func);
   } else {
     LOG(FATAL) << "ValueError: Cannot find where to insert Relax.Function";
   }

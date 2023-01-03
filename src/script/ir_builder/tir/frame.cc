@@ -52,7 +52,7 @@ void PrimFuncFrameNode::ExitWithScope() {
     }
     // Define the function.
     // Note we do checks to disallow redefinition of functions inside the `DefFunction`.
-    ir::DefFunction(func_name, func);// todo(yongwww): working here
+    ir::DefFunction(func_name, func);
   } else {
     LOG(FATAL) << "ValueError: Cannot find where to insert PrimFunc";
   }

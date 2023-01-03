@@ -577,7 +577,9 @@ class Normalizer : public BlockBuilderImpl, private ExprFunctor<Expr(const Expr&
     } else {
       call = Call(new_op, new_args, op->attrs, op->sinfo_args);
     }
-    //LOG(INFO) << "180 unchanged: " << unchanged << " --- op: " << call->op;
+    LOG(INFO) << "180 unchanged: " << unchanged
+              << " \n--- op: " << call->op
+              << " call: " << call << " \n---call->struct_info_ : " << call->struct_info_;
 
     if (!call->struct_info_.defined()) {
       auto inferred_sinfo = InferStructInfo(call);

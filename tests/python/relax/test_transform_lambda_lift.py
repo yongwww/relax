@@ -164,9 +164,9 @@ def test_recursive():
             return r
 
         @R.function
-        def main(x: R.Tensor((2, 3), "float32")) -> R.Tensor:
+        def main(x: R.Tensor((2, 3), "float32")) -> R.Tensor((2, 3), dtype="float32"):
             while_loop = R.make_closure(lifted_func_0, (x,))
-            gv: R.Tensor((2, 3), "float32") = R.invoke_closure(
+            gv: R.Tensor(ndim=2, dtype="float32") = R.invoke_closure(
                 while_loop,
                 (relax.const(0), x),
                 sinfo_args=(R.Tensor(ndim=2, dtype="float32")),
@@ -199,7 +199,7 @@ def test_recursive():
 
     before = Before
     print("parsing done")
-    # before.show()
+    before.show()
     expected = Expected
     expected.show()
     # Perform Lamda Lifting
@@ -317,6 +317,6 @@ def test_no_local_func():
 if __name__ == "__main__":
     # tvm.testing.main()
     # test_basic()
-    # test_closure()
-    test_recursive()
+    test_closure()
+    # test_recursive()
     # test_multi_func()

@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import tvm
 from tvm import DataType, relax
 from tvm.ir import PrimExpr
-from tvm.relax import Call, Expr, ExternFunc, TupleGetItem, Var, const
+from tvm.relax import Call, Expr, ExternFunc, TupleGetItem, Var, VarBinding, const
 
 ############################### Operators ###############################
 from tvm.relax.op import (

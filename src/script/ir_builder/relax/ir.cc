@@ -98,8 +98,6 @@ void FuncRetStructInfo(const tvm::relax::StructInfo& ret_sinfo) {
 void FuncRetValue(const tvm::relax::Expr& value) {
   // Step 0. Normalize the value.
   const tvm::relax::BlockBuilder& block_builder = GetBlockBuilder();
-  LOG(INFO) << "159 Normalize!!";
-  //   // todo(yongwww): Normalilze
   tvm::relax::Expr normalized_value = block_builder->Normalize(value);
 
   // Step 1. The current Relax TVMScript syntax only allows function return appearing at the end of
@@ -111,13 +109,12 @@ void FuncRetValue(const tvm::relax::Expr& value) {
     ICHECK(!IRBuilder::Current()->FindFrame<BlockFrame>())
         << "All block frame are supposed to be popped out already";
   }
-  
   // Step 2. Add the output value to the function frame.
   FunctionFrame frame = FindFunctionFrame("return");
   CHECK(!frame->output.defined())
       << "ValueError: Relax functions don't support multiple return statement. Please make sure "
          "the return statement appears at the end of function.";
-  
+
   frame->output = std::move(normalized_value);
 }
 

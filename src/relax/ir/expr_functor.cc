@@ -433,8 +433,10 @@ Expr ExprMutatorBase::VisitExpr_(const CallNode* call_node) {
     call_args.push_back(new_arg);
     unchanged &= new_arg.same_as(arg);
   }
+  LOG(INFO) << "yongwww unchanged: " << unchanged << "  call_node->op: "  << call_node->op;
 
   if (unchanged && VisitAndCheckStructInfoFieldUnchanged(call_node->struct_info_)) {
+    LOG(INFO) << "yes yongwww unchanged: ";
     return GetRef<Expr>(call_node);
   } else {
     return Call(new_op, call_args, call_node->attrs, sinfo_args, call_node->span);
