@@ -64,21 +64,31 @@ class LambdaLifter : public ExprMutator {
               << "\n new_value sinfo: " << new_value->struct_info_
               << "\n new_value.same_as(binding->value: " << new_value.same_as(binding->value);
     if (!binding->var->struct_info_.defined()) {
-      UpdateStructInfo(binding->var, GetStructInfo(new_value));
+       UpdateStructInfo(binding->var, GetStructInfo(new_value));
+      //binding->var->struct_info_ = GetStructInfo(new_value);
+     //binding->var->checked_type_ = GetStaticType(GetStructInfo(new_value));
     }
+    /*
+    if (binding->var->name_hint() == "in_call") {
+          binding->var->struct_info_ = ObjectStructInfo();
+          builder_->EmitNormalized(VarBinding(binding->var, new_value));
+          return;
+    }
+    */
     if (new_value.same_as(binding->value)) {
+      LOG(INFO) << "yongwww 72";
       if (new_value->struct_info_.defined()) {
         binding->var->struct_info_ = GetStructInfo(new_value);
         binding->var->checked_type_ = new_value->checked_type_;
       }
       builder_->EmitNormalized(GetRef<VarBinding>(binding));
     } else {
+      LOG(INFO) << "yongwww 79";
       if (new_value->struct_info_.defined()) {
+        LOG(INFO) << "yongwww 81";
         binding->var->struct_info_ = GetStructInfo(new_value);
         binding->var->checked_type_ = new_value->checked_type_;
-        // if (binding->var->name_hint() == "in_call") {
-        //  binding->var->struct_info_ = ObjectStructInfo();
-        // }
+        
       }
       builder_->EmitNormalized(VarBinding(binding->var, new_value));
     }
@@ -88,17 +98,28 @@ class LambdaLifter : public ExprMutator {
   }
 
   Expr VisitExpr_(const CallNode* call_node) final {
-    LOG(INFO) << " call_node op is " << call_node->op << " sinfo: " << call_node->struct_info_;
+    LOG(INFO) << "\n call_node op is "
+              << call_node->op << " sinfo: " << call_node->struct_info_;
     auto call = Downcast<Call>(ExprMutator::VisitExpr_(call_node));
+    LOG(INFO) << "\n 94 call: "<< call << " \n ###   call sinfo: " << call->struct_info_;
     if (auto const* var_node = call_node->op.as<VarNode>()) {
       auto var = GetRef<Var>(var_node);
       bool has_closure = HasClosure(var);
       auto val = builder_->LookupBinding(var);
       LOG(INFO) << "106 yongwww var " << var->name_hint() << " \n--- var: " << var
-                << " \n--- vid: " << var->vid << " \ntype: " << var->checked_type_
+                << " \n--- vid: " << var->vid << " \ntype: " << var->struct_info_
                 << "  \nhas_closure: " << has_closure << " \n val: " << val;
+
+      if (var->name_hint() == "outer_func") { // hack
+        call->struct_info_ = ObjectStructInfo();
+        call->checked_type_ = ObjectType();
+      }
+      if (this->var_remap_.find(var->vid) != this->var_remap_.end()) { // nothing happens
+          Var test = this->var_remap_.at(var->vid);
+          LOG(INFO) << "test var: " << test << " name: " << test->name_hint();
+      }
       // Call "relax.invoke_closure" to invoke closure
-      if (has_closure && val->IsInstance<CallNode>()) {
+      if (has_closure && val->IsInstance<CallNode>()) { // nothing related
         Var clo_arg = var;
         if (this->var_remap_.find(var->vid) != this->var_remap_.end()) {
           clo_arg = this->var_remap_.at(var->vid);
@@ -109,7 +130,7 @@ class LambdaLifter : public ExprMutator {
       //if (val->IsInstance<GlobalVarNode>()) {
       //}
       auto it = lambda_map_.find(var);
-      if (it != lambda_map_.end()) {
+      if (it != lambda_map_.end()) { // didn't reach here
         LOG(INFO) << "get here it->second: " << it->second;
         // flatten nested call, e.g. call(y)(x) -> call(x, y))
         Array<relay::Expr> new_args;

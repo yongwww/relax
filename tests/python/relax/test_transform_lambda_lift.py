@@ -117,7 +117,7 @@ def test_closure():
             @R.function
             def outer_func(
                 c1: R.Tensor((2, 3), "float32")
-            ) -> R.Callable((R.Tensor((2, 3), "float32"),), R.Tensor((2, 3), "float32")):
+            ) -> R.Callable((R.Tensor((2, 3), "float32"),), R.Tensor((2, 3), "float32")):  # 300
                 @R.function
                 def inner_func(x1: R.Tensor((2, 3), "float32")) -> R.Tensor((2, 3), "float32"):
                     s: R.Tensor((2, 3), "float32") = R.add(x1, c1)
@@ -166,10 +166,10 @@ def test_recursive():
         @R.function
         def main(x: R.Tensor((2, 3), "float32")) -> R.Tensor((2, 3), dtype="float32"):
             while_loop = R.make_closure(lifted_func_0, (x,))
-            gv: R.Tensor(ndim=2, dtype="float32") = R.invoke_closure(
+            gv: R.Tensor((2, 3), dtype="float32") = R.invoke_closure(
                 while_loop,
                 (relax.const(0), x),
-                sinfo_args=(R.Tensor(ndim=2, dtype="float32")),
+                sinfo_args=(R.Tensor((2, 3), dtype="float32")),
             )
             return gv
 
@@ -201,11 +201,13 @@ def test_recursive():
     print("parsing done")
     before.show()
     expected = Expected
-    expected.show()
+
     # Perform Lamda Lifting
     after = transform.LambdaLift()(before)
     print("after lambda: ")
     after.show()
+    print("expected:\n")
+    expected.show()
     assert len(after.functions) == 2
 
     assert_structural_equal(after, expected, map_free_vars=True)
@@ -235,14 +237,14 @@ def test_multi_func():
         @R.function
         def lifted_func_0(
             x2: R.Tensor((10, 5), "float32"), y2: R.Tensor((10, 5), "float32")
-        ) -> R.Tensor(None, "float32", ndim=2):
+        ) -> R.Tensor((10, 5), "float32"):
             s: R.Tensor((10, 5), "float32") = R.add(x2, y2)
             return s
 
         @R.function
         def lifted_func_1(
             x21: R.Tensor((10, 5), "float32"), y21: R.Tensor((10, 5), "float32")
-        ) -> R.Tensor(None, "float32", ndim=2):
+        ) -> R.Tensor((10, 5), "float32"):
             s1: R.Tensor((10, 5), "float32") = R.add(x21, y21)
             return s1
 
@@ -282,7 +284,10 @@ def test_multi_func():
     # Perform Lamda Lifting
     after = transform.LambdaLift()(before)
     assert len(after.functions) == 4
+    print("after:\n")
     after.show()
+    print("expected:\n")
+    expected.show()
     assert_structural_equal(after, expected, map_free_vars=True)
     _check_save_roundtrip(after)
 
@@ -316,7 +321,7 @@ def test_no_local_func():
 
 if __name__ == "__main__":
     # tvm.testing.main()
-    # test_basic()
+    test_basic()
     test_closure()
-    # test_recursive()
-    # test_multi_func()
+    test_recursive()
+    test_multi_func()
