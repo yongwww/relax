@@ -577,9 +577,6 @@ class Normalizer : public BlockBuilderImpl, private ExprFunctor<Expr(const Expr&
     } else {
       call = Call(new_op, new_args, op->attrs, op->sinfo_args);
     }
-    LOG(INFO) << "180 unchanged: " << unchanged
-              << " \n--- op: " << call->op
-              << " call: " << call << " \n---call->struct_info_ : " << call->struct_info_;
 
     if (!call->struct_info_.defined()) {
       auto inferred_sinfo = InferStructInfo(call);
@@ -620,14 +617,10 @@ class Normalizer : public BlockBuilderImpl, private ExprFunctor<Expr(const Expr&
       seq_expr = SeqExpr(normalized_blocks, new_body, op->span);
     }
 
-    //LOG(INFO) << "\nMerge SeqExpr old body: " << op->body  << " shape: " << op->body->shape_
-    //          << "\n new_body: " << new_body << "shape: " << new_body->shape_;
-
     // only do shape/type inference if the SeqExpr does not have shape/type
     if (!seq_expr->struct_info_.defined()) {
       UpdateStructInfo(seq_expr, EraseToWellDefinedInScope(GetStructInfo(seq_expr->body)));
     }
-    //LOG(INFO) << "\nMerge SeqExpr old shape: " << op->shape_  << " vs new shape: " << seq_expr->shape_;
     return seq_expr;
   }
 

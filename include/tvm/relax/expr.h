@@ -421,14 +421,7 @@ class VarNode : public LeafExprNode {
 
   bool SEqualReduce(const VarNode* other, SEqualReducer equal) const {
     equal->MarkGraphNode();
-    LOG(INFO) << "var name: " << name_hint() << " vid: " << vid
-              << "\n struct_info_: " << struct_info_
-              << " \nvs \n" << " other name: " << other->name_hint()
-              << " vid: " << other->vid
-              << " other sinfo: " << other->struct_info_;
-    auto ret = equal(vid, other->vid) && equal(struct_info_, other->struct_info_);
-    LOG(INFO) << "Equal? " << ret;
-    return ret;
+    return equal(vid, other->vid) && equal(struct_info_, other->struct_info_);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {

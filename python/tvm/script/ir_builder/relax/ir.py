@@ -332,6 +332,7 @@ def emit_match_cast(value: Expr, struct_info: StructInfo) -> Var:
         The value of the MatchCast to be emitted.
     struct_info: StructInfo
         The struct_info of the MatchCast to be emitted.
+
     Returns
     -------
     var: Var
@@ -345,7 +346,7 @@ def emit_var_binding(value: VarBinding) -> Var:
     Parameters
     ----------
     value: VarBinding
-        The right side value of the bindings to be emitted.
+        The binding to be emitted.
 
     Returns
     -------

@@ -20,7 +20,6 @@
 #define TVM_SCRIPT_IR_BUILDER_IR_FRAME_H_
 
 #include <tvm/ir/expr.h>
-#include <tvm/relax/expr.h>
 #include <tvm/ir/function.h>
 #include <tvm/node/node.h>
 #include <tvm/script/ir_builder/base.h>

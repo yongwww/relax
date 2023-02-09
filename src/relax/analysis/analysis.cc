@@ -182,6 +182,5 @@ TVM_REGISTER_GLOBAL("relax.analysis.all_vars").set_body_typed(AllVars);
 
 TVM_REGISTER_GLOBAL("relax.analysis.all_global_vars").set_body_typed(AllGlobalVars);
 
-
 }  // namespace relax
 }  // namespace tvm

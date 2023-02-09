@@ -17,7 +17,6 @@
 """Package tvm.script.ir_builder.ir.ir"""
 
 from tvm.ir import BaseFunc, GlobalVar
-from tvm.relax import Var
 
 from . import _ffi_api
 from .frame import IRModuleFrame
@@ -52,13 +51,10 @@ def decl_function(func_name: str, func_signature: BaseFunc) -> GlobalVar:
     gv : GlobalVar
         The corresponding GlobalVar.
     """
-    print("59, decl_function: ", func_name)
 
-    ret = _ffi_api.DeclFunction(  # pylint: disable=no-member # type: ignore
+    return _ffi_api.DeclFunction(  # pylint: disable=no-member # type: ignore
         func_name, func_signature
     )
-    print("decl_function done")
-    return ret
 
 
 def def_function(func_name: str, func: BaseFunc) -> None:

@@ -199,13 +199,12 @@ tvm::relax::Var EmitMatchCast(const tvm::relax::Expr& value,
 
   tvm::relax::Var var = block_builder->EmitMatchCast(value, struct_info);
   block_frame->emitted_vars.push_back(var);
-  return var;                              
+  return var;
 }
 
 tvm::relax::Var EmitVarBinding(const tvm::relax::VarBinding& binding) {
   BlockFrame block_frame = CheckBlockFrameExistAndUnended();
   const tvm::relax::BlockBuilder& block_builder = GetBlockBuilder();
-  // tvm::relax::Var var{nullptr};
   block_builder->EmitNormalized(binding);
   block_frame->emitted_vars.push_back(binding->var);
   return binding->var;

@@ -157,7 +157,6 @@ def visit_tvm_declare_function(self: Parser, node: doc.FunctionDef) -> None:
     with self.var_table.with_frame():
         collect_symbolic_var_from_params(self, node)
 
-        print("visit visit_tvm_declare_function func: ", node.name)
         if node.returns is None:
             # Use ObjectStructInfo as unknown return type
             # NOTE: Cannot use VoidStructInfo here because the return type can be refined later.
@@ -165,12 +164,10 @@ def visit_tvm_declare_function(self: Parser, node: doc.FunctionDef) -> None:
         else:
             ret_sinfo = eval_struct_info(self, node.returns, eval_str=True)
         params = []
-        params_sinfo = []
         for arg in node.args.args:
             if arg.annotation is None:
                 self.report_error(arg, "Type annotation is required for function parameters.")
             param_sinfo = eval_struct_info(self, arg.annotation, eval_str=True)
-            params_sinfo.append(param_sinfo)
             params.append(relax.Var(arg.arg, param_sinfo))
 
     func_signature = relax.Function.create_empty(params, ret_sinfo)
@@ -180,41 +177,27 @@ def visit_tvm_declare_function(self: Parser, node: doc.FunctionDef) -> None:
 
 @dispatch.register(token="relax", type_name="tvm_declare_local_function")
 def visit_tvm_declare_local_function(self: Parser, node: doc.FunctionDef) -> None:
-    print("visit visit_tvm_declare_local_function func: ", node.name)
     with self.var_table.with_frame():
         collect_symbolic_var_from_params(self, node)
 
-        print("visit visit_tvm_declare_function func: ", node.name)
         if node.returns is None:
             ret_sinfo = relax.TupleStructInfo([])
         else:
             ret_sinfo = eval_struct_info(self, node.returns, eval_str=True)
-        params = []
         params_sinfo = []
         for arg in node.args.args:
             if arg.annotation is None:
                 self.report_error(arg, "Type annotation is required for function parameters.")
             param_sinfo = eval_struct_info(self, arg.annotation, eval_str=True)
             params_sinfo.append(param_sinfo)
-            params.append(relax.Var(arg.arg, param_sinfo))
 
-    # ret_shape = relax.RuntimeDepShape()
+    decl_var = relax.Var(node.name, relax.FuncStructInfo(params_sinfo, ret_sinfo))
 
-    decl_var = relax.Var(
-        node.name, relax.FuncStructInfo(params_sinfo, ret_sinfo)
-    )  # relax.FuncType(arg_types, ret_type)
-
-    print(
-        "200 decl_var: {} vid: {} \nstruct_info:{}".format(
-            decl_var, decl_var.vid, decl_var.struct_info
-        )
-    )
     self.var_table.add(node.name, decl_var)
 
     # declare the multi-level nested functions
     for inner_stmt in node.body:
         if isinstance(inner_stmt, doc.FunctionDef):
-            print("yongwww second level local func debugging: ", inner_stmt.name)
             self.visit_tvm_declare_local_function(inner_stmt)
 
 
@@ -229,15 +212,12 @@ def post_token_switch(self: Parser, node: doc.Expr) -> None:
     ir_builder = IRBuilder.current()
     result = ir_builder.get()
     ir_builder.__exit__(None, None, None)
+    # reuse var if it is reserved
     reserved_var = self.var_table.get().get(node.name)
-    print("get reserved var: {} vid: {} ".format(reserved_var, reserved_var.vid))
-    bind = relax.VarBinding(reserved_var, result)
-
-    var = R.emit_var_binding(bind)
-    print(
-        "yongwww node.name: {}  var: {} -  name: {}  - vid: {}".format(
-            node.name, var, var.name_hint, var.vid
-        )
+    var = (
+        R.emit_var_binding(relax.VarBinding(reserved_var, result))
+        if reserved_var
+        else R.emit(result)
     )
     IRBuilder.name(node.name, var)
     self.var_table.add(node.name, var, allow_shadowing=False)
