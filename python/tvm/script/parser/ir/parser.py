@@ -36,11 +36,6 @@ def _visit_class_def(self: Parser, node: doc.ClassDef) -> None:
             for stmt in node.body:
                 if isinstance(stmt, doc.FunctionDef):
                     self.visit_tvm_declare_function(stmt)
-                    for inner_stmt in stmt.body:
-                        if isinstance(inner_stmt, doc.FunctionDef):
-                            # declare the local functions recursively
-                            self.visit_tvm_declare_local_function(inner_stmt)
-
             with self.with_dispatch_token("ir"):
                 self.visit_body(node.body)
 

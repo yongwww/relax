@@ -136,7 +136,6 @@ def test_closure():
     _check_save_roundtrip(after)
 
 
-@pytest.mark.skip(reason="need to update well_formed to allow undefined recursive vars")
 def test_recursive():
     # the expected IRModule
     @tvm.script.ir_module
@@ -163,7 +162,7 @@ def test_recursive():
             while_loop = R.make_closure(lifted_func_0, (x,))
             gv: R.Tensor((2, 3), dtype="float32") = R.invoke_closure(
                 while_loop,
-                (relax.const(0), x),
+                (R.const(0), x),
                 sinfo_args=(R.Tensor((2, 3), dtype="float32")),
             )
             return gv
@@ -189,11 +188,13 @@ def test_recursive():
                     r: R.Tensor((2, 3), "float32") = s
                 return r
 
-            gv: R.Tensor((2, 3), "float32") = while_loop(relax.const(0), x)
+            gv: R.Tensor((2, 3), "float32") = while_loop(R.const(0), x)
             return gv
 
     before = Before
     expected = Expected
+    # check well-formness of recursive call
+    assert relax.analysis.well_formed(before)
 
     # Perform Lamda Lifting
     after = transform.LambdaLift()(before)
@@ -203,7 +204,6 @@ def test_recursive():
     _check_save_roundtrip(after)
 
 
-@pytest.mark.skip(reason="Need fix after parser switch over")
 def test_multi_func():
     # expected IRModule
     @tvm.script.ir_module

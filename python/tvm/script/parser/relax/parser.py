@@ -96,8 +96,7 @@ def eval_struct_info_proxy(self: Parser, node: doc.expr) -> StructInfoProxy:
             annotation = annotation()
         if isinstance(annotation, StructInfoProxy):
             return annotation
-        else:
-            raise TypeError(f"Expected StructInfoProxy but got {type(annotation)}.")
+        raise TypeError(f"Expected StructInfoProxy but got {type(annotation)}.")
     except Exception as err:
         self.report_error(node, str(err))
         raise err
@@ -128,6 +127,24 @@ def collect_symbolic_var_from_params(self: Parser, node: doc.FunctionDef) -> Non
 
 @dispatch.register(token="relax", type_name="FunctionDef")
 def visit_function_def(self: Parser, node: doc.FunctionDef) -> None:
+    # reserve a var for local function
+    func_val = self.var_table.get().get(node.name)
+    if not func_val:
+        collect_symbolic_var_from_params(self, node)
+        if node.returns is None:
+            ret_sinfo = relax.TupleStructInfo([])
+        else:
+            ret_sinfo = eval_struct_info(self, node.returns, eval_str=True)
+        params_sinfo = []
+        for arg in node.args.args:
+            if arg.annotation is None:
+                self.report_error(arg, "Type annotation is required for function parameters.")
+            param_sinfo = eval_struct_info(self, arg.annotation, eval_str=True)
+            params_sinfo.append(param_sinfo)
+        # created a var for the local function, the same var could be used for recursive call
+        local_func_var = relax.Var(node.name, relax.FuncStructInfo(params_sinfo, ret_sinfo))
+        self.var_table.add(node.name, local_func_var)
+
     with self.var_table.with_frame():
         with self.with_dispatch_token("relax"):
             with R.function():
@@ -175,32 +192,6 @@ def visit_tvm_declare_function(self: Parser, node: doc.FunctionDef) -> None:
     self.var_table.add(node.name, global_var)
 
 
-@dispatch.register(token="relax", type_name="tvm_declare_local_function")
-def visit_tvm_declare_local_function(self: Parser, node: doc.FunctionDef) -> None:
-    with self.var_table.with_frame():
-        collect_symbolic_var_from_params(self, node)
-
-        if node.returns is None:
-            ret_sinfo = relax.TupleStructInfo([])
-        else:
-            ret_sinfo = eval_struct_info(self, node.returns, eval_str=True)
-        params_sinfo = []
-        for arg in node.args.args:
-            if arg.annotation is None:
-                self.report_error(arg, "Type annotation is required for function parameters.")
-            param_sinfo = eval_struct_info(self, arg.annotation, eval_str=True)
-            params_sinfo.append(param_sinfo)
-
-    decl_var = relax.Var(node.name, relax.FuncStructInfo(params_sinfo, ret_sinfo))
-
-    self.var_table.add(node.name, decl_var)
-
-    # declare the multi-level nested functions
-    for inner_stmt in node.body:
-        if isinstance(inner_stmt, doc.FunctionDef):
-            self.visit_tvm_declare_local_function(inner_stmt)
-
-
 @dispatch.register(token="relax", type_name="pre_token_switch")
 def pre_token_switch(self: Parser, node: doc.Expr) -> None:  # pylint: disable=unused-argument
     ir_builder = IRBuilder()
@@ -214,11 +205,10 @@ def post_token_switch(self: Parser, node: doc.Expr) -> None:
     ir_builder.__exit__(None, None, None)
     # reuse var if it is reserved
     reserved_var = self.var_table.get().get(node.name)
-    var = (
-        R.emit_var_binding(relax.VarBinding(reserved_var, result))
-        if reserved_var
-        else R.emit(result)
-    )
+    if reserved_var:
+        var = R.emit_var_binding(relax.VarBinding(reserved_var, result))
+    else:
+        var = R.emit(result)
     IRBuilder.name(node.name, var)
     self.var_table.add(node.name, var, allow_shadowing=False)
 
